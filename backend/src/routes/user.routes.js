@@ -1,6 +1,5 @@
 import express from "express";
-
-import{
+import {
     getMyProfile,
     updateMyProfile,
     getPublicProfile,
@@ -11,10 +10,12 @@ import authMiddleware from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
+// "/me" routes must stay above "/:username"
 router.get("/me", authMiddleware, getMyProfile);
 router.patch("/me", authMiddleware, updateMyProfile);
+router.delete("/me", authMiddleware, deleteMyAccount);
+
+router.get("/:id/activity", authMiddleware, getUserActivity);
 router.get("/:username", getPublicProfile);
-router.delete("/me", authMiddleware, deleteMyAccount); //Not completed yet, will be modified later
-router.get("/:id/activity", getUserActivity); //will be modified Later
 
 export default router;

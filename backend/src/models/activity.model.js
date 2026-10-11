@@ -5,13 +5,12 @@ const activitySchema = new mongoose.Schema(
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: true,
-            index: true
+            required: true
         },
         type: {
-            type:String,
-            required:true,
-            enum:[
+            type: String,
+            required: true,
+            enum: [
                 "SONG_LIKED",
                 "SONG_PLAYED",
                 "PLAYLIST_CREATED",
@@ -37,6 +36,9 @@ const activitySchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+
+// Serves "latest activity of a user" and its pagination
+activitySchema.index({ userId: 1, createdAt: -1 });
 
 const Activity = mongoose.model("Activity", activitySchema);
 

@@ -9,9 +9,11 @@ const sessionSchema = new mongoose.Schema(
             index: true
         },
 
+        // SHA-256 hash of the refresh token (never the raw token)
         refreshToken: {
             type: String,
-            required: true
+            required: true,
+            unique: true
         },
 
         expiresAt: {
@@ -23,6 +25,9 @@ const sessionSchema = new mongoose.Schema(
         timestamps: true
     }
 );
+
+// MongoDB deletes the session automatically once expiresAt has passed
+sessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 const Session = mongoose.model("Session", sessionSchema);
 

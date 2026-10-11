@@ -1,248 +1,274 @@
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import User from "../models/user.model.js";
-import jwt from "jsonwebtoken";
+import Session from "../models/session.model.js";
 import {
     generateAccessToken,
-    generateRefreshToken
+    generateRefreshToken,
+    verifyRefreshToken,
+    getTokenExpiry
 } from "../utils/jwt.js";
+import {
+    USERNAME_REGEX,
+    EMAIL_REGEX,
+    RESERVED_USERNAMES,
+    asString
+} from "../utils/validators.js";
 
-import Session from "../models/session.model.js";
+// Refresh tokens are stored hashed so a database leak cannot be replayed.
+const hashToken = (token) =>
+    crypto.createHash("sha256").update(token).digest("hex");
 
+const publicUser = (user) => ({
+    id: user._id,
+    username: user.username,
+    displayName: user.displayName,
+    email: user.email,
+    avatar: user.avatar,
+    bio: user.bio
+});
+
+const fail = (res, status, message) =>
+    res.status(status).json({ success: false, message });
+
+// Compared against when the email is unknown, so "no such user" takes as
+// long as "wrong password" (prevents timing-based email discovery).
+const DUMMY_HASH = bcrypt.hashSync("not-a-real-password", 12);
+
+// The Flutter register screen only collects Full Name, email and password,
+// so when no username is sent we derive a unique one from the email.
+const generateUniqueUsername = async (email) => {
+    let base = email
+        .split("@")[0]
+        .toLowerCase()
+        .replace(/[^a-z0-9_.]/g, "")
+        .slice(0, 20);
+    if (base.length < 3) base = `${base}user`;
+
+    for (let i = 0; i < 6; i++) {
+        const candidate =
+            i === 0 ? base : `${base}${Math.floor(1000 + Math.random() * 9000)}`;
+        if (
+            !RESERVED_USERNAMES.has(candidate) &&
+            !(await User.exists({ username: candidate }))
+        ) {
+            return candidate;
+        }
+    }
+    return `${base}${Date.now().toString().slice(-6)}`;
+};
+
+// ---------------------------------------------------------------
+// REGISTER
+// body: { email, password, displayName?, username? }
+// ---------------------------------------------------------------
 export const registerUser = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const email = asString(req.body.email).toLowerCase();
+        const password =
+            typeof req.body.password === "string" ? req.body.password : "";
+        const displayName = asString(req.body.displayName).slice(0, 50);
+        let username = asString(req.body.username).toLowerCase();
 
-  
-        if (!username || !email || !password) {
-            return res.status(400).json({
-                success: false,
-                message: "Username, email and password are required"
-            });
+        if (!email || !password) {
+            return fail(res, 400, "Email and password are required");
+        }
+        if (!EMAIL_REGEX.test(email)) {
+            return fail(res, 400, "Invalid email address");
+        }
+        // bcrypt only uses the first 72 bytes of a password
+        if (password.length < 8 || password.length > 72) {
+            return fail(res, 400, "Password must be 8-72 characters");
         }
 
-
-        const existingUser = await User.findOne({
-            $or: [
-                { username },
-                { email }
-            ]
-        });
-
-        if (existingUser) {
-            return res.status(409).json({
-                success: false,
-                message: "Username or email already exists"
-            });
+        if (username) {
+            if (!USERNAME_REGEX.test(username) || RESERVED_USERNAMES.has(username)) {
+                return fail(
+                    res,
+                    400,
+                    "Username must be 3-30 characters: letters, numbers, _ or ."
+                );
+            }
+            if (await User.exists({ username })) {
+                return fail(res, 409, "Username already taken");
+            }
         }
 
+        if (await User.exists({ email })) {
+            return fail(res, 409, "Email already registered");
+        }
+
+        if (!username) {
+            username = await generateUniqueUsername(email);
+        }
 
         const hashedPassword = await bcrypt.hash(password, 12);
 
-  
         const user = await User.create({
             username,
             email,
+            displayName,
             password: hashedPassword
         });
-
 
         return res.status(201).json({
             success: true,
             message: "User registered successfully",
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                avatar: user.avatar,
-                bio: user.bio
-            }
+            user: publicUser(user)
         });
-
     } catch (error) {
+        // Unique index violation (two sign-ups at the same moment)
+        if (error.code === 11000) {
+            const field = Object.keys(error.keyPattern ?? {})[0];
+            return fail(
+                res,
+                409,
+                field === "username"
+                    ? "Username already taken"
+                    : "Email already registered"
+            );
+        }
+        if (error.name === "ValidationError") {
+            return fail(res, 400, "Invalid registration details");
+        }
         console.error("Register error:", error);
-
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error"
-        });
+        return fail(res, 500, "Internal server error");
     }
 };
+
+// ---------------------------------------------------------------
+// LOGIN
+// body: { email, password }
+// ---------------------------------------------------------------
 export const loginUser = async (req, res) => {
+    try {
+        const email = asString(req.body.email).toLowerCase();
+        const password =
+            typeof req.body.password === "string" ? req.body.password : "";
 
-    try{
-        const {email, password} = req.body;
-
-        //Validate Input
-        if(!email || !password){
-            return res.status(400).json({
-                success: false,
-                message: "Email and password are required"
-            });
-        };
-        //Find User and Validate Password
-        const user = await User
-        .findOne({email:email.toLowerCase()})
-        .select("+password");
-
-        if(!user){
-            return res.status(401).json({
-                success: false,
-                message: "Invalid email or password"
-            });
+        if (!email || !password) {
+            return fail(res, 400, "Email and password are required");
         }
-        //Compare Passwords
-        const passwordMatch = await bcrypt.compare
-        (password, user.password);
-        if(!passwordMatch){
-            return res.status(401).json({
-                success: false,
-                message: "Invalid email or password"
-            });
+
+        const user = await User.findOne({ email }).select("+password");
+
+        const passwordMatch = await bcrypt.compare(
+            password,
+            user ? user.password : DUMMY_HASH
+        );
+
+        if (!user || !passwordMatch) {
+            return fail(res, 401, "Invalid email or password");
         }
-        //Generate Tokens
+
         const accessToken = generateAccessToken(user._id);
         const refreshToken = generateRefreshToken(user._id);
 
-        const expiresAt = new Date(
-        Date.now() + 7 * 24 * 60 * 60 * 1000
-            );
-
-            await Session.create({
-                userId: user._id,
-                refreshToken,
-                expiresAt
-            });
-
-        //Store Refresh Token in HttpOnly Cookie
-        res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        await Session.create({
+            userId: user._id,
+            refreshToken: hashToken(refreshToken),
+            expiresAt: getTokenExpiry(refreshToken)
         });
 
-        //Send Response
+        // Flutter keeps both tokens in flutter_secure_storage.
         return res.status(200).json({
             success: true,
             message: "Login successful",
             accessToken,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                avatar: user.avatar,
-                bio: user.bio
-            }
+            refreshToken,
+            user: publicUser(user)
         });
-    }
-    catch(error){
+    } catch (error) {
         console.error("Login error:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error"
-        });
+        return fail(res, 500, "Internal server error");
     }
-
 };
-export const getCurrentUser = async (req, res) => {
-    try{
-        const user = await User.findById(req.userId);
 
-        if(!user){
-            return res.status(404).json({
-                success: false,
-                message: "User not found"
-            });
+// ---------------------------------------------------------------
+// CURRENT USER  (authMiddleware sets req.userId)
+// ---------------------------------------------------------------
+export const getCurrentUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.userId);
+        if (!user) {
+            return fail(res, 404, "User not found");
         }
         return res.status(200).json({
             success: true,
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                avatar: user.avatar,
-                bio: user.bio
-            }
+            user: publicUser(user)
         });
-    }catch(error){
+    } catch (error) {
         console.error("Get current user error:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error"
-        });
+        return fail(res, 500, "Internal server error");
     }
-
 };
+
+// ---------------------------------------------------------------
+// REFRESH  (rotation: every refresh returns a NEW refresh token)
+// body: { refreshToken }
+// ---------------------------------------------------------------
 export const refreshToken = async (req, res) => {
-    try{
-        const refreshToken = req.cookies.refreshToken;
-        if(!refreshToken){
-            return res.status(401).json({
-                success: false,
-                message: "Refresh token not found"
-            });
+    try {
+        const token = req.body?.refreshToken;
+        if (!token || typeof token !== "string") {
+            return fail(res, 401, "Refresh token not found");
         }
-        const session = await Session.findOne({refreshToken});
-        if(!session){
-            return res.status(401).json({
-                success: false,
-                message: "Invalid refresh token"
-            });
+
+        // 1. Signature + expiry first, so junk never reaches MongoDB
+        let decoded;
+        try {
+            decoded = verifyRefreshToken(token);
+        } catch {
+            return fail(res, 401, "Invalid or expired refresh token");
         }
-        if(session.expiresAt < new Date()){
-            await Session.deleteOne({ _id: session._id });
-            return res.status(401).json({
-                success: false,
-                message: "Refresh token expired"
-            });
-        }
-        const decoded = jwt.verify(
-            refreshToken,
-            process.env.JWT_REFRESH_SECRET
+
+        // 2. Swap old session token for a new one in ONE atomic update.
+        //    If two requests arrive with the same token, only one wins.
+        const newRefreshToken = generateRefreshToken(decoded.id);
+
+        const session = await Session.findOneAndUpdate(
+            {
+                refreshToken: hashToken(token),
+                userId: decoded.id,
+                expiresAt: { $gt: new Date() }
+            },
+            {
+                refreshToken: hashToken(newRefreshToken),
+                expiresAt: getTokenExpiry(newRefreshToken)
+            }
         );
 
-        if(decoded.id !== session.userId.toString()){
-            return res.status(401).json({
-                success: false,
-                message: "Invalid refresh token"
-            });
+        if (!session) {
+            return fail(res, 401, "Invalid refresh token");
         }
-        const newAccessToken = generateAccessToken(session.userId);
+
         return res.status(200).json({
             success: true,
-            accessToken: newAccessToken
+            accessToken: generateAccessToken(decoded.id),
+            refreshToken: newRefreshToken
         });
-    }
-    catch(error){
+    } catch (error) {
         console.error("Refresh token error:", error);
-        return res.status(401).json({
-            success: false,
-            message: "Invalid or expired refresh token"
-        });
+        return fail(res, 500, "Internal server error");
     }
-
 };
+
+// ---------------------------------------------------------------
+// LOGOUT  (always succeeds; removes the session if the token is known)
+// body: { refreshToken }
+// ---------------------------------------------------------------
 export const logoutUser = async (req, res) => {
-    try{
-        const refreshToken = req.cookies.refreshToken;
-        if(refreshToken){
-            await Session.deleteOne({refreshToken});
-            res.clearCookie("refreshToken", {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: "strict"
-            });
+    try {
+        const token = req.body?.refreshToken;
+        if (token && typeof token === "string") {
+            await Session.deleteOne({ refreshToken: hashToken(token) });
         }
         return res.status(200).json({
             success: true,
             message: "User logged out successfully"
         });
-    } catch(error){
+    } catch (error) {
         console.error("Logout error:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error"
-        });
+        return fail(res, 500, "Internal server error");
     }
-
-}
+};
