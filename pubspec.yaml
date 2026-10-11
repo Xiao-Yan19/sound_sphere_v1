@@ -1,5 +1,5 @@
 name: sound_sphere_v1
-description: "A new Flutter project."
+description: "Music Social Streaming App"
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -13,6 +13,9 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   google_fonts: ^9.0.0
+  dio: ^5.11.1
+  flutter_secure_storage: ^11.2.0
+  flutter_riverpod: ^3.4.3
 
 dev_dependencies:
   flutter_test:

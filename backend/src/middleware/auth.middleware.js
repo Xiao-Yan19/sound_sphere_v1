@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import { verifyAccessToken } from "../utils/jwt.js";
 
 const authMiddleware = (req, res, next) => {
     try {
@@ -7,6 +7,7 @@ const authMiddleware = (req, res, next) => {
         if (!authHeader) {
             return res.status(401).json({
                 success: false,
+                code: "NO_TOKEN",
                 message: "Authorization header missing"
             });
         }
@@ -16,29 +17,28 @@ const authMiddleware = (req, res, next) => {
         if (scheme !== "Bearer" || !token) {
             return res.status(401).json({
                 success: false,
+                code: "BAD_AUTH_FORMAT",
                 message: "Invalid authorization format"
             });
         }
 
-        const decoded = jwt.verify(
-            token,
-            process.env.JWT_ACCESS_SECRET
-        );
-
+        const decoded = verifyAccessToken(token);
         req.userId = decoded.id;
 
         next();
-
     } catch (error) {
+        // The Flutter Dio interceptor refreshes ONLY on TOKEN_EXPIRED
         if (error.name === "TokenExpiredError") {
             return res.status(401).json({
                 success: false,
+                code: "TOKEN_EXPIRED",
                 message: "Access token expired"
             });
         }
 
         return res.status(401).json({
             success: false,
+            code: "INVALID_TOKEN",
             message: "Invalid access token"
         });
     }

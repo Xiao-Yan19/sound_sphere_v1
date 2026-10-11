@@ -29,46 +29,28 @@ class AppTheme {
     ),
 
     textTheme: const TextTheme(
-      bodyLarge: TextStyle(
-        color: AppColors.textPrimary,
-      ),
-      bodyMedium: TextStyle(
-        color: AppColors.textPrimary,
-      ),
-      bodySmall: TextStyle(
-        color: AppColors.textSecondary,
-      ),
+      bodyLarge: TextStyle(color: AppColors.textPrimary),
+      bodyMedium: TextStyle(color: AppColors.textPrimary),
+      bodySmall: TextStyle(color: AppColors.textSecondary),
     ),
 
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: Colors.transparent,
 
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 15,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
 
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(
-          color: AppColors.border,
-          width: 1,
-        ),
+        borderSide: const BorderSide(color: AppColors.border, width: 1),
       ),
 
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(
-          color: AppColors.focusBorder,
-          width: 2,
-        ),
+        borderSide: const BorderSide(color: AppColors.focusBorder, width: 2),
       ),
 
-      hintStyle: const TextStyle(
-        color: AppColors.textSecondary,
-        fontSize: 13,
-      ),
+      hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
     ),
   );
 }
