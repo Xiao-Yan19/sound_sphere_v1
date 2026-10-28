@@ -40,23 +40,25 @@ class SoundSphereApp extends ConsumerWidget {
 ///   checking saved session -> splash
 ///   valid session          -> home (auto-login)
 ///   no session             -> login
+
+/// Always opens the public Home Page.
+/// Authentication state is still managed by Riverpod.
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final status = ref.watch(authControllerProvider.select((s) => s.status));
+    final status = ref.watch(
+      authControllerProvider.select((s) => s.status),
+    );
 
-    switch (status) {
-      case AuthStatus.unknown:
-        return const _SplashScreen();
-      case AuthStatus.authenticated:
-        return const HomeScreen();
-      case AuthStatus.unauthenticated:
-        return const LoginScreen();
-    }
+    // The HomeScreen can display different actions based on this status.
+    return HomeScreen(
+      isAuthenticated: status == AuthStatus.authenticated,
+    );
   }
 }
+
 
 class _SplashScreen extends StatelessWidget {
   const _SplashScreen();
