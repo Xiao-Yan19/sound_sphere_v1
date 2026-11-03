@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/presentation/login_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../auth/application/auth_controller.dart';
+
+import '../../player/application/audio_handler_provider.dart';
+import '../../player/presentation/player_screen.dart';
 
 const Color _mint = Color(0xFF82E6D1);
 const Color _darkTeal = Color(0xFF173536);
@@ -55,6 +56,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
+  // Plays a temporary test audio track.
+  Future<void> playTestSong({
+    required String title,
+    required String artist,
+  }) async {
+    try {
+      final handler = ref.read(audioHandlerProvider);
+
+      await handler.playUrl(
+        url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+        title: title,
+        artist: artist,
+      );
+
+      if (!mounted) return;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const PlayerScreen()),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Playback failed: $error')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,21 +107,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   children: [
                     _buildHeader(),
                     _buildMoodFilters(),
+
                     const SizedBox(height: 28),
+
                     _buildSectionTitle('Quick Picks'),
                     const SizedBox(height: 10),
                     _buildQuickPicks(),
+
                     const SizedBox(height: 18),
+
                     _buildSectionTitle('Hot & Trending'),
                     const SizedBox(height: 10),
                     _buildTrending(),
+
                     const SizedBox(height: 18),
+
                     _buildSectionTitle('Popular Picks'),
                     const SizedBox(height: 10),
                     _buildPopular(),
                   ],
                 ),
               ),
+
               Align(
                 alignment: Alignment.bottomCenter,
                 child: _buildBottomNavigation(),
@@ -104,9 +140,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // HEADER
+
   Widget _buildHeader() {
     final authState = ref.watch(authControllerProvider);
     final user = authState.user;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 18, 0),
       child: Row(
@@ -123,7 +162,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Icon(Icons.person, color: Color(0xFF7B8584), size: 29),
             ),
           ),
+
           const SizedBox(width: 13),
+
           Expanded(
             child: Text(
               authState.status == AuthStatus.authenticated
@@ -138,6 +179,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
           ),
+
           if (!widget.isAuthenticated)
             TextButton(
               onPressed: () {
@@ -157,12 +199,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
             ),
+
           IconButton(
             tooltip: 'Listening history',
             onPressed: () {},
             visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.access_time, color: _mint, size: 24),
           ),
+
           IconButton(
             tooltip: 'Settings',
             onPressed: () {},
@@ -174,6 +218,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // MOOD FILTERS
+
   Widget _buildMoodFilters() {
     return SizedBox(
       height: 44,
@@ -181,13 +227,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 9),
         scrollDirection: Axis.horizontal,
         itemCount: moods.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 18),
+        separatorBuilder: (_, _) => const SizedBox(width: 18),
         itemBuilder: (context, index) {
           final mood = moods[index];
           final isSelected = mood == selectedMood;
 
           return GestureDetector(
-            onTap: () => setState(() => selectedMood = mood),
+            onTap: () {
+              setState(() {
+                selectedMood = mood;
+              });
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
@@ -219,6 +269,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // SECTION TITLES
+
   Widget _buildSectionTitle(String title) {
     return Center(
       child: Padding(
@@ -247,6 +299,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // QUICK PICKS
+
   Widget _buildQuickPicks() {
     return SizedBox(
       height: 195,
@@ -255,11 +309,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 30),
         children: [
           _quickPickCard(index: 0, width: 195, verticalText: false),
+
           const SizedBox(width: 10),
+
           _quickPickCard(index: 1, width: 53, verticalText: true),
+
           const SizedBox(width: 10),
+
           _quickPickCard(index: 2, width: 53, verticalText: true),
+
           const SizedBox(width: 10),
+
           _quickPickCard(index: 3, width: 53, verticalText: true),
         ],
       ),
@@ -274,7 +334,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final song = songs[index % songs.length];
 
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        playTestSong(title: song['title']!, artist: song['genre']!);
+      },
       child: Container(
         width: width,
         decoration: BoxDecoration(
@@ -317,7 +379,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
+
                   const SizedBox(height: 5),
+
                   Text(
                     song['genre']!,
                     maxLines: 1,
@@ -330,6 +394,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // HOT & TRENDING
+
   Widget _buildTrending() {
     return SizedBox(
       height: 96,
@@ -337,7 +403,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 28),
         scrollDirection: Axis.horizontal,
         itemCount: 5,
-        separatorBuilder: (_, __) => const SizedBox(width: 13),
+        separatorBuilder: (_, _) => const SizedBox(width: 13),
         itemBuilder: (context, index) {
           final song = songs[index % songs.length];
 
@@ -366,7 +432,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     color: Colors.white,
                   ),
                 ),
+
                 const SizedBox(height: 3),
+
                 Text(
                   song['genre']!,
                   maxLines: 1,
@@ -381,87 +449,101 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // POPULAR PICKS
+
   Widget _buildPopular() {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 22),
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: 5,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final song = songs[index % songs.length];
 
-        return Container(
-          height: 70,
-          padding: const EdgeInsets.symmetric(horizontal: 9),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFF414C4B), Color(0xFF1B3B3D)],
+        return GestureDetector(
+          onTap: () {
+            playTestSong(title: song['title']!, artist: song['genre']!);
+          },
+          child: Container(
+            height: 70,
+            padding: const EdgeInsets.symmetric(horizontal: 9),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF414C4B), Color(0xFF1B3B3D)],
+              ),
+              borderRadius: BorderRadius.circular(10),
             ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
+            child: Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.music_note,
+                    color: _mutedTeal,
+                    size: 27,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.music_note,
-                  color: _mutedTeal,
-                  size: 27,
-                ),
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      song['title']!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+
+                const SizedBox(width: 11),
+
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        song['title']!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      song['genre']!,
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: Colors.white,
+
+                      const SizedBox(height: 3),
+
+                      Text(
+                        song['genre']!,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              IconButton(
-                tooltip: likedSongs.contains(index)
-                    ? 'Unlike song'
-                    : 'Like song',
-                onPressed: () => toggleLike(index),
-                icon: Icon(
-                  likedSongs.contains(index)
-                      ? Icons.favorite
-                      : Icons.favorite_border,
-                  color: likedSongs.contains(index) ? _mint : Colors.white70,
+
+                IconButton(
+                  tooltip: likedSongs.contains(index)
+                      ? 'Unlike song'
+                      : 'Like song',
+                  onPressed: () => toggleLike(index),
+                  icon: Icon(
+                    likedSongs.contains(index)
+                        ? Icons.favorite
+                        : Icons.favorite_border,
+                    color: likedSongs.contains(index) ? _mint : Colors.white70,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
     );
   }
+
+  // BOTTOM NAVIGATION
 
   Widget _buildBottomNavigation() {
     return SizedBox(
@@ -483,7 +565,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   children: [
                     _navItem(Icons.link, 'Connect', 0),
                     _navItem(Icons.search, 'Search', 1),
+
                     const SizedBox(width: 65),
+
                     _navItem(Icons.favorite, 'Liked Songs', 3),
                     _navItem(Icons.library_music, 'Library', 4),
                   ],
@@ -491,10 +575,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
           ),
+
           Positioned(
             bottom: 74,
             child: GestureDetector(
-              onTap: () => setState(() => selectedTab = 2),
+              onTap: () {
+                setState(() {
+                  selectedTab = 2;
+                });
+              },
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -520,7 +609,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: Image.asset(
                         'assets/images/Logo.png',
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(
+                        errorBuilder: (_, _, _) => const Icon(
                           Icons.graphic_eq,
                           color: _mint,
                           size: 35,
@@ -528,7 +617,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 3),
+
                   Text(
                     'Home',
                     style: GoogleFonts.inter(
@@ -546,13 +637,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // NAVIGATION ITEM
+
   Widget _navItem(IconData icon, String label, int index) {
     final isSelected = selectedTab == index;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
-        setState(() => selectedTab = index);
+        setState(() {
+          selectedTab = index;
+        });
       },
       child: SizedBox(
         width: 59,
@@ -562,7 +657,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, size: 25, color: isSelected ? Colors.white : _mint),
+
               const SizedBox(height: 4),
+
               Text(
                 label,
                 maxLines: 1,
@@ -581,20 +678,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
+// CUSTOM NAVIGATION BAR CLIPPER
+
 class _NavBarClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
+
     path.moveTo(0, 35);
+
     path.quadraticBezierTo(size.width * 0.12, 35, size.width * 0.25, 12);
+
     path.quadraticBezierTo(size.width * 0.5, -32, size.width * 0.75, 12);
+
     path.quadraticBezierTo(size.width * 0.88, 35, size.width, 35);
+
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
     path.close();
+
     return path;
   }
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) {
+    return false;
+  }
 }
