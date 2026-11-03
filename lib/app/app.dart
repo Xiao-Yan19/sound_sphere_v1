@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/auth/application/auth_controller.dart';
-import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/widgets/auth_widgets.dart';
 import '../features/home/presentation/home_screen.dart';
 import 'theme.dart';
