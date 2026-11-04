@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import musicRoutes from "./routes/music.routes.js";
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use("/api/auth/register", authLimiter);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/music", musicRoutes);
 
 app.get("/", (req, res) => {
     res.status(200).json({
