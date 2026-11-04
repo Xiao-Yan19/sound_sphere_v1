@@ -434,6 +434,7 @@ packages:
     description:
       name: meta
       sha256: "307249ce4ff29d58a18e97f6345f539382eb9c9c29ecda628900f31de0443dd9"
+      sha256: "307249ce4ff29d58a18e97f6345f539382eb9c9c29ecda628900f31de0443dd9"
       url: "https://pub.dev"
     source: hosted
     version: "1.19.0"
@@ -461,6 +462,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.0"
+=========
+>>>>>>>>> Temporary merge branch 2
   path:
     dependency: transitive
     description:
@@ -702,10 +705,11 @@ packages:
     dependency: transitive
     description:
       name: vm_service
-      sha256: "89b11d62e1040ee681af3b4f1c97a803ecbf010c6e8b9c5896ee5b08c3bf7b78"
+      sha256: "5f37239c4851efcef929cea7824e76df7f2f0970aef85d66bbc430afa40e72f0"
       url: "https://pub.dev"
     source: hosted
     version: "15.4.0"
+<<<<<<<<< Temporary merge branch 1
   web:
     dependency: transitive
     description:
@@ -738,6 +742,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.4"
+=========
+>>>>>>>>> Temporary merge branch 2
 sdks:
   dart: ">=3.13.4 <4.0.0"
   flutter: ">=3.47.0"
