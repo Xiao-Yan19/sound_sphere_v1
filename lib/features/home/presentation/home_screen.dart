@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'dart:async';
+
 import 'package:sound_sphere_v1/features/music/data/models/music_track.dart';
 import 'package:sound_sphere_v1/features/music/application/music_providers.dart';
 
@@ -42,6 +44,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     'FeelGood',
     'Sleep',
   ];
+  final PageController _quickPickController = PageController();
+
+  Timer? _quickPickTimer;
+  int _quickPickCount = 0;
+  int _quickPickIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _quickPickTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted || !_quickPickController.hasClients || _quickPickCount < 2) {
+        return;
+      }
+
+      final nextIndex = (_quickPickIndex + 1) % _quickPickCount;
+
+      _quickPickController.animateToPage(
+        nextIndex,
+        duration: const Duration(milliseconds: 650),
+        curve: Curves.easeInOutCubic,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _quickPickTimer?.cancel();
+    _quickPickController.dispose();
+    super.dispose();
+  }
 
   void toggleLike(int index) {
     setState(() {
@@ -51,6 +84,150 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         likedSongs.add(index);
       }
     });
+  }
+
+  Widget _buildCenterMiniPlayer() {
+    final handler = ref.read(audioHandlerProvider);
+
+    return StreamBuilder<MediaItem?>(
+      stream: handler.mediaItem,
+      builder: (context, snapshot) {
+        final item = snapshot.data;
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 76,
+              height: 76,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _deepTeal,
+                border: Border.all(
+                  color: _mint.withValues(alpha: 0.35),
+                  width: 2,
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black38,
+                    blurRadius: 12,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+                image: item?.artUri != null
+                    ? DecorationImage(
+                        image: NetworkImage(item!.artUri.toString()),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: item?.artUri == null
+                  ? const Icon(Icons.graphic_eq_rounded, color: _mint, size: 39)
+                  : null,
+            ),
+
+            const SizedBox(height: 5),
+
+            GestureDetector(
+              onTap: item == null
+                  ? null
+                  : () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const PlayerScreen()),
+                      );
+                    },
+              child: Column(
+                children: [
+                  Text(
+                    item?.title ?? 'Home',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    item?.artist ?? '',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      color: Colors.white70,
+                      fontSize: 9,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDockPlaybackControls() {
+    final handler = ref.read(audioHandlerProvider);
+
+    return StreamBuilder<PlaybackState>(
+      stream: handler.playbackState,
+      builder: (context, snapshot) {
+        final isPlaying = snapshot.data?.playing ?? false;
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              onPressed: () => handler.skipToPrevious(),
+              icon: const Icon(
+                Icons.skip_previous_rounded,
+                color: Colors.white70,
+                size: 25,
+              ),
+            ),
+
+            const SizedBox(width: 8),
+
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: _mint.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: IconButton(
+                onPressed: () {
+                  if (isPlaying) {
+                    handler.pause();
+                  } else {
+                    handler.play();
+                  }
+                },
+                icon: Icon(
+                  isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  color: Colors.white,
+                  size: 29,
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 8),
+
+            IconButton(
+              onPressed: () => handler.skipToNext(),
+              icon: const Icon(
+                Icons.skip_next_rounded,
+                color: Colors.white70,
+                size: 25,
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> playMusicTrack(MusicTrack track) async {
@@ -103,7 +280,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Stack(
             children: [
               SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 135),
+                padding: const EdgeInsets.only(bottom: 200),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -130,12 +307,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ],
                 ),
               ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 145,
-                child: _buildMiniPlayer(),
-              ),
+
               Align(
                 alignment: Alignment.bottomCenter,
                 child: _buildBottomNavigation(),
@@ -156,17 +328,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final item = snapshot.data;
 
         if (item == null) {
-          return const SizedBox.shrink();
+          return const SizedBox(height: 5);
         }
 
         return Container(
-          height: 68,
-          margin: const EdgeInsets.symmetric(horizontal: 14),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          height: 62,
+          margin: const EdgeInsets.symmetric(horizontal: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 9),
           decoration: BoxDecoration(
             color: const Color(0xFF29494B),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _mint.withOpacity(0.35)),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _mint.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
@@ -184,16 +356,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: item.artUri != null
                           ? Image.network(
                               item.artUri.toString(),
-                              width: 44,
-                              height: 44,
+                              width: 42,
+                              height: 42,
                               fit: BoxFit.cover,
                               errorBuilder: (_, _, _) => _miniPlayerIcon(),
                             )
                           : _miniPlayerIcon(),
                     ),
-                    const SizedBox(width: 11),
+                    const SizedBox(width: 9),
                     SizedBox(
-                      width: 155,
+                      width: 125,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,18 +376,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.white,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              fontSize: 13,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 3),
                           Text(
                             item.artist ?? 'Unknown Artist',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.white70,
-                              fontSize: 11,
+                              fontSize: 10,
                             ),
                           ),
                         ],
@@ -224,15 +396,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ],
                 ),
               ),
-
               const Spacer(),
-
               StreamBuilder<PlaybackState>(
                 stream: handler.playbackState,
                 builder: (context, stateSnapshot) {
                   final isPlaying = stateSnapshot.data?.playing ?? false;
 
                   return IconButton(
+                    visualDensity: VisualDensity.compact,
                     onPressed: () {
                       if (isPlaying) {
                         handler.pause();
@@ -245,7 +416,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ? Icons.pause_rounded
                           : Icons.play_arrow_rounded,
                       color: _mint,
-                      size: 30,
+                      size: 28,
                     ),
                   );
                 },
@@ -265,6 +436,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: const Icon(Icons.music_note_rounded, color: _mint, size: 25),
     );
   }
+
   // HEADER
 
   Widget _buildHeader() {
@@ -352,7 +524,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 9),
         scrollDirection: Axis.horizontal,
         itemCount: moods.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 18),
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final mood = moods[index];
           final isSelected = mood == selectedMood;
@@ -365,11 +537,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? const Color(0xFF47766B)
-                    : const Color(0xFF294F4C),
+                    ? const Color(0xFF3E6A60)
+                    : const Color(0xFF25423F),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isSelected
@@ -381,7 +553,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Text(
                   mood,
                   style: GoogleFonts.inter(
-                    fontSize: 9,
+                    fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
@@ -426,6 +598,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // QUICK PICKS
 
+  static const double _qpLeftPad = 16;
+  static const double _qpNarrow = 56;
+  static const double _qpGap = 10;
+
+  // Works out where every Quick Pick card sits for a given (fractional) page.
+  // The focused card is wide, the following cards are narrow pills.
+  List<_QuickSlot> _quickPickSlots(double page, double width, int count) {
+    final big = (width - (_qpLeftPad * 2) - 2 * (_qpNarrow + _qpGap))
+        .clamp(120.0, 600.0)
+        .toDouble();
+
+    final i0 = page.floor().clamp(0, count - 1);
+    final f = page - i0;
+
+    double left = _qpLeftPad - f * (_qpNarrow + _qpGap);
+    int start = i0;
+
+    if (i0 > 0) {
+      start = i0 - 1;
+      left -= (_qpNarrow + _qpGap);
+    }
+
+    final slots = <_QuickSlot>[];
+
+    for (int i = start; i < count; i++) {
+      final t = (i - page).abs().clamp(0.0, 1.0).toDouble();
+      final w = _qpNarrow + (big - _qpNarrow) * (1 - t);
+
+      slots.add(_QuickSlot(index: i, left: left, width: w, t: t));
+
+      left += w + _qpGap;
+      if (left > width) break;
+    }
+
+    return slots;
+  }
+
   Widget _buildQuickPicks() {
     return ref
         .watch(trendingTracksProvider)
@@ -456,20 +665,97 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               );
             }
 
-            final count = tracks.length > 4 ? 4 : tracks.length;
+            _quickPickCount = tracks.length;
+
+            double currentPage() {
+              if (_quickPickController.hasClients &&
+                  _quickPickController.position.hasContentDimensions) {
+                return (_quickPickController.page ??
+                        _quickPickController.initialPage.toDouble())
+                    .clamp(0.0, (tracks.length - 1).toDouble())
+                    .toDouble();
+              }
+              return _quickPickController.initialPage.toDouble();
+            }
 
             return SizedBox(
               height: 195,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 30),
-                itemCount: count,
-                separatorBuilder: (_, _) => const SizedBox(width: 10),
-                itemBuilder: (context, index) {
-                  return _quickPickCard(
-                    track: tracks[index],
-                    width: index == 0 ? 195 : 53,
-                    verticalText: index != 0,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth;
+
+                  return Stack(
+                    children: [
+                      // Visual layer: cards positioned from the page value.
+                      Positioned.fill(
+                        child: ClipRect(
+                          child: AnimatedBuilder(
+                            animation: _quickPickController,
+                            builder: (context, _) {
+                              final slots = _quickPickSlots(
+                                currentPage(),
+                                width,
+                                tracks.length,
+                              );
+
+                              return Stack(
+                                children: [
+                                  for (final s in slots)
+                                    Positioned(
+                                      left: s.left,
+                                      top: 0,
+                                      bottom: 0,
+                                      width: s.width,
+                                      child: _quickPickCard(
+                                        track: tracks[s.index],
+                                        width: s.width,
+                                        verticalText: s.t > 0.8,
+                                        color: Color.lerp(
+                                          const Color(0xFFD9F7EA),
+                                          s.index.isEven
+                                              ? const Color(0xFFA0D6CE)
+                                              : const Color(0xFF8DEBD0),
+                                          s.t,
+                                        )!,
+                                        radius: 25 + 10 * s.t,
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+
+                      // Gesture layer: swipe changes the page, tap plays the card.
+                      Positioned.fill(
+                        child: PageView.builder(
+                          controller: _quickPickController,
+                          itemCount: tracks.length,
+                          onPageChanged: (index) => _quickPickIndex = index,
+                          itemBuilder: (context, index) {
+                            return GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTapUp: (details) {
+                                final dx = details.localPosition.dx;
+                                final slots = _quickPickSlots(
+                                  currentPage(),
+                                  width,
+                                  tracks.length,
+                                );
+
+                                for (final s in slots) {
+                                  if (dx >= s.left && dx <= s.left + s.width) {
+                                    playMusicTrack(tracks[s.index]);
+                                    break;
+                                  }
+                                }
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),
@@ -482,66 +768,70 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required MusicTrack track,
     required double width,
     required bool verticalText,
+    Color color = const Color(0xFFD9F7EA),
+    double radius = 25,
   }) {
-    return GestureDetector(
-      onTap: () => playMusicTrack(track),
-      child: Container(
-        width: width,
-        decoration: BoxDecoration(
-          color: const Color(0xFFA7DCD3),
-          borderRadius: BorderRadius.circular(25),
-          image: track.imageUrl != null && track.imageUrl!.isNotEmpty
-              ? DecorationImage(
-                  image: NetworkImage(track.imageUrl!),
-                  fit: BoxFit.cover,
-                  colorFilter: ColorFilter.mode(
-                    Colors.black.withValues(alpha: 0.35),
-                    BlendMode.darken,
-                  ),
-                )
-              : null,
-        ),
-        padding: const EdgeInsets.all(8),
-        child: verticalText
-            ? Center(
-                child: RotatedBox(
-                  quarterTurns: 1,
-                  child: Text(
-                    track.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+    final hasImage = track.imageUrl != null && track.imageUrl!.isNotEmpty;
+    final textColor = hasImage ? Colors.white : Colors.black87;
+
+    return Container(
+      width: width,
+      clipBehavior: Clip.hardEdge,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(radius),
+        image: hasImage
+            ? DecorationImage(
+                image: NetworkImage(track.imageUrl!),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.black.withValues(alpha: 0.25),
+                  BlendMode.darken,
                 ),
               )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    track.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    track.artistName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(fontSize: 10, color: Colors.white),
-                  ),
-                ],
-              ),
+            : null,
       ),
+      padding: const EdgeInsets.all(12),
+      child: verticalText
+          ? Align(
+              alignment: Alignment.topCenter,
+              child: RotatedBox(
+                quarterTurns: 1,
+                child: Text(
+                  track.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: textColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  track.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: textColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  track.artistName, // shown where the mock says "Genre"
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(fontSize: 11, color: textColor),
+                ),
+              ],
+            ),
     );
   }
 
@@ -582,9 +872,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 28),
                 scrollDirection: Axis.horizontal,
-                itemCount: tracks.length,
+                itemCount: tracks.length + 1,
                 separatorBuilder: (_, _) => const SizedBox(width: 13),
                 itemBuilder: (context, index) {
+                  if (index == tracks.length) {
+                    return Container(
+                      width: 26,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_forward,
+                        color: Colors.white,
+                        size: 14,
+                      ),
+                    );
+                  }
+
                   final track = tracks[index];
 
                   return GestureDetector(
@@ -595,7 +900,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         gradient: const LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [Color(0xFF46504F), Color(0xFF1B3D3E)],
+                          colors: [Color(0xFF4A5655), Color(0xFF2A4547)],
                         ),
                         borderRadius: BorderRadius.circular(8),
                         image:
@@ -645,6 +950,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           },
         );
   }
+
   // POPULAR PICKS
 
   Widget _buildPopular() {
@@ -689,7 +995,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 return GestureDetector(
                   onTap: () => playMusicTrack(track),
                   child: Container(
-                    height: 70,
+                    height: 74,
                     padding: const EdgeInsets.symmetric(horizontal: 9),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
@@ -702,18 +1008,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Row(
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(26),
+                          borderRadius: BorderRadius.circular(29),
                           child:
                               track.imageUrl != null &&
                                   track.imageUrl!.isNotEmpty
                               ? Image.network(
                                   track.imageUrl!,
-                                  width: 52,
-                                  height: 52,
+                                  width: 58,
+                                  height: 58,
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, _, _) => const SizedBox(
-                                    width: 52,
-                                    height: 52,
+                                    width: 58,
+                                    height: 58,
                                     child: Icon(
                                       Icons.music_note,
                                       color: _mutedTeal,
@@ -721,8 +1027,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ),
                                 )
                               : const SizedBox(
-                                  width: 52,
-                                  height: 52,
+                                  width: 58,
+                                  height: 58,
                                   child: Icon(
                                     Icons.music_note,
                                     color: _mutedTeal,
@@ -740,7 +1046,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.inter(
-                                  fontSize: 12,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white,
                                 ),
@@ -751,7 +1057,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.inter(
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   color: Colors.white70,
                                 ),
                               ),
@@ -781,96 +1087,104 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           },
         );
   }
+
   // BOTTOM NAVIGATION
 
   Widget _buildBottomNavigation() {
+    const double domeTop = 30;
+
     return SizedBox(
-      height: 145,
-      child: Stack(
-        alignment: Alignment.bottomCenter,
-        clipBehavior: Clip.none,
-        children: [
-          ClipPath(
-            clipper: _NavBarClipper(),
-            child: Container(
-              height: 110,
-              color: const Color(0xFF263F47),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(9, 30, 9, 9),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    _navItem(Icons.link, 'Connect', 0),
-                    _navItem(Icons.search, 'Search', 1),
-
-                    const SizedBox(width: 65),
-
-                    _navItem(Icons.favorite, 'Liked Songs', 3),
-                    _navItem(Icons.library_music, 'Library', 4),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          Positioned(
-            bottom: 74,
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  selectedTab = 2;
-                });
-              },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 62,
-                    height: 62,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: selectedTab == 2
-                          ? const Color(0xFF537D72)
-                          : const Color(0xFF385B59),
-                      border: Border.all(color: _mint.withValues(alpha: 0.3)),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 10,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(9),
-                      child: Image.asset(
-                        'assets/images/Logo.png',
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, _, _) => const Icon(
-                          Icons.graphic_eq,
-                          color: _mint,
-                          size: 35,
-                        ),
+      height: 215,
+      width: double.infinity,
+      child: Center(
+        child: SizedBox(
+          width: 300,
+          height: 215,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Outer dome (smooth half-ellipse)
+              Positioned(
+                left: -10,
+                right: -10,
+                top: domeTop + 15,
+                bottom: 0,
+                child: ClipPath(
+                  clipper: _DomeClipper(),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0xFF3A5254), Color(0xFF2A4345)],
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 3),
-
-                  Text(
-                    'Home',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+
+              // Inner dome behind the playback controls
+              Positioned(
+                left: 65,
+                right: 65,
+                bottom: 0,
+                height: 84,
+                child: ClipPath(
+                  clipper: _DomeClipper(),
+                  child: Container(color: const Color(0xFF3B5A5F)),
+                ),
+              ),
+
+              // Search
+              Positioned(
+                left: 24,
+                top: domeTop + 74,
+                width: 80,
+                child: _navItem(Icons.search, 'Search', 1),
+              ),
+
+              // Liked Songs
+              Positioned(
+                right: 24,
+                top: domeTop + 74,
+                width: 80,
+                child: _navItem(Icons.favorite, 'Liked Songs', 3),
+              ),
+
+              // Connect
+              Positioned(
+                left: -5,
+                bottom: 12,
+                width: 80,
+                child: _navItem(Icons.link, 'Connect', 0),
+              ),
+
+              // Library
+              Positioned(
+                right: -5,
+                bottom: 12,
+                width: 80,
+                child: _navItem(Icons.library_music, 'Library', 4),
+              ),
+
+              // Center artwork and track information
+              Positioned(
+                top: 6,
+                left: 90,
+                right: 90,
+                child: _buildCenterMiniPlayer(),
+              ),
+
+              // Playback controls
+              Positioned(
+                bottom: 20,
+                left: 55,
+                right: 55,
+                child: _buildDockPlaybackControls(),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -916,30 +1230,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-// CUSTOM NAVIGATION BAR CLIPPER
+// QUICK PICK LAYOUT DATA
 
-class _NavBarClipper extends CustomClipper<Path> {
+class _QuickSlot {
+  final int index;
+  final double left;
+  final double width;
+  final double t; // 0 = focused (wide), 1 = narrow
+
+  const _QuickSlot({
+    required this.index,
+    required this.left,
+    required this.width,
+    required this.t,
+  });
+}
+
+// SMOOTH DOME CLIPPER (true half-ellipse, used for both domes)
+
+class _DomeClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
-    final path = Path();
-
-    path.moveTo(0, 35);
-
-    path.quadraticBezierTo(size.width * 0.12, 35, size.width * 0.25, 12);
-
-    path.quadraticBezierTo(size.width * 0.5, -32, size.width * 0.75, 12);
-
-    path.quadraticBezierTo(size.width * 0.88, 35, size.width, 35);
-
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
-    return path;
+    return Path()
+      ..moveTo(0, size.height)
+      ..arcToPoint(
+        Offset(size.width, size.height),
+        radius: Radius.elliptical(size.width / 2, size.height),
+        clockwise: true,
+      )
+      ..close();
   }
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) {
-    return false;
-  }
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
