@@ -14,6 +14,7 @@ import '../../auth/application/auth_controller.dart';
 
 import 'package:audio_service/audio_service.dart';
 
+import '../../music/presentation/search_screen.dart';
 import '../../player/application/audio_handler_provider.dart';
 import '../../player/presentation/player_screen.dart';
 
@@ -267,48 +268,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _darkTeal,
-      body: Container(
-        decoration: const BoxDecoration(color: AppColors.background),
-        child: SafeArea(
-          bottom: false,
-          child: Stack(
-            children: [
-              SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 200),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
-                    _buildMoodFilters(),
-
-                    const SizedBox(height: 28),
-
-                    _buildSectionTitle('Quick Picks'),
-                    const SizedBox(height: 10),
-                    _buildQuickPicks(),
-
-                    const SizedBox(height: 18),
-
-                    _buildSectionTitle('Hot & Trending'),
-                    const SizedBox(height: 10),
-                    _buildTrending(),
-
-                    const SizedBox(height: 18),
-
-                    _buildSectionTitle('Popular Picks'),
-                    const SizedBox(height: 10),
-                    _buildPopular(),
-                  ],
+    return PopScope(
+      canPop: selectedTab != 1,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && selectedTab == 1) {
+          setState(() {
+            selectedTab = 2;
+          });
+        }
+      },
+      child: Scaffold(
+        backgroundColor: _darkTeal,
+        body: Container(
+          decoration: const BoxDecoration(color: AppColors.background),
+          child: SafeArea(
+            bottom: false,
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 200),
+                  child: selectedTab == 1
+                      ? const SearchScreen()
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHeader(),
+                            _buildMoodFilters(),
+                            const SizedBox(height: 28),
+                            _buildSectionTitle('Quick Picks'),
+                            const SizedBox(height: 10),
+                            _buildQuickPicks(),
+                            const SizedBox(height: 18),
+                            _buildSectionTitle('Hot & Trending'),
+                            const SizedBox(height: 10),
+                            _buildTrending(),
+                            const SizedBox(height: 18),
+                            _buildSectionTitle('Popular Picks'),
+                            const SizedBox(height: 10),
+                            _buildPopular(),
+                          ],
+                        ),
                 ),
-              ),
-
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: _buildBottomNavigation(),
-              ),
-            ],
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: _buildBottomNavigation(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
