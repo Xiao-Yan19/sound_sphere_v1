@@ -1,323 +1,311 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-import '../../auth/application/auth_controller.dart';
+import '../../player/application/audio_handler_provider.dart';
 
-const Color _mint = Color(0xFF82E6D1);
-const Color _darkTeal = Color(0xFF173536);
-const Color _deepTeal = Color(0xFF203F40);
-const Color _lavender = Color(0xFFB6C5FF);
+class PlayerScreen extends ConsumerStatefulWidget {
+  const PlayerScreen({super.key});
 
-class ProfileScreen extends ConsumerWidget {
-  const ProfileScreen({super.key});
+  @override
+  ConsumerState<PlayerScreen> createState() => _PlayerScreenState();
+}
 
-  Future<void> _logout(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: _deepTeal,
-        title: Text('Log out?', style: GoogleFonts.inter(color: Colors.white)),
-        content: Text(
-          'You can continue browsing SoundSphere as a guest.',
-          style: GoogleFonts.inter(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel', style: TextStyle(color: _mint)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Log out', style: TextStyle(color: _mint)),
-          ),
-        ],
-      ),
-    );
+class _PlayerScreenState extends ConsumerState<PlayerScreen> {
+  double? _dragValue;
 
-    if (confirmed != true || !context.mounted) return;
+  String formatDuration(Duration duration) {
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds.remainder(60);
 
-    try {
-      await ref.read(authControllerProvider.notifier).logout();
+    return '$minutes:${seconds.toString().padLeft(2, '0')}';
+  }
 
-      if (!context.mounted) return;
-
-      // Return to the Home screen, which remains available to guests.
-      Navigator.of(context).popUntil((route) => route.isFirst);
-    } catch (_) {
-      if (!context.mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not log out. Please try again.')),
-      );
-    }
+  // For Debugging: Track when the PlayerScreen is created and disposed
+  @override
+  void initState() {
+    super.initState();
+    debugPrint('🎵 PlayerScreen CREATED');
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final auth = ref.watch(authControllerProvider);
-    final isAuthenticated = auth.status == AuthStatus.authenticated;
+  void dispose() {
+    debugPrint('🎵 PlayerScreen DISPOSED');
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final handler = ref.watch(audioHandlerProvider);
 
     return Scaffold(
-      backgroundColor: _darkTeal,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [_darkTeal, _deepTeal, Color(0xFF536F7A)],
+      backgroundColor: const Color(0xFF101A19),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          'NOW PLAYING',
+          style: TextStyle(
+            fontSize: 13,
+            letterSpacing: 2,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 12, 16),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        tooltip: 'Back',
-                        onPressed: () => Navigator.of(context).maybePop(),
-                        icon: const Icon(Icons.arrow_back, color: _mint),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'My Profile',
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontSize: 21,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Log out',
-                        onPressed: isAuthenticated
-                            ? () => _logout(context, ref)
-                            : null,
-                        icon: const Icon(Icons.logout_rounded, color: _mint),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 18, 24, 28),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: _mint, width: 2),
-                        ),
-                        child: const CircleAvatar(
-                          radius: 49,
-                          backgroundColor: Color(0xFFE8ECEB),
-                          child: Icon(
-                            Icons.person,
-                            size: 58,
-                            color: Color(0xFF7B8584),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                      Text(
-                        isAuthenticated
-                            ? (auth.user?.displayName ?? 'User')
-                            : 'Guest User',
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 25,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        isAuthenticated
-                            ? 'Your music, your world.'
-                            : 'Log in to access your account.',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
-                          color: Colors.white70,
-                          fontSize: 13,
-                        ),
-                      ),
-                      if (!isAuthenticated) ...[
-                        const SizedBox(height: 16),
-                        OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            // The Home header contains the Log in button.
-                          },
-                          icon: const Icon(Icons.arrow_back),
-                          label: const Text('Back to Home to log in'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: _mint,
-                            side: const BorderSide(color: _mint),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Text(
-                    'Your Music',
-                    style: GoogleFonts.inter(
-                      color: _mint,
-                      fontSize: 25,
-                      fontWeight: FontWeight.w800,
+        centerTitle: true,
+      ),
+
+      body: StreamBuilder(
+        stream: handler.mediaItem,
+        builder: (context, snapshot) {
+          final item = snapshot.data;
+
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final artworkSize = (constraints.maxWidth - 48).clamp(
+                180.0,
+                320.0,
+              );
+
+              return SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 20,
                     ),
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 18, 12, 28),
-                  child: Row(
-                    children: [
-                      _stat(Icons.favorite, '0', 'Liked Songs'),
-                      _stat(Icons.queue_music, '5', 'Playlists'),
-                      _stat(Icons.people, '4', 'Connections'),
-                      _stat(Icons.history, '7', 'Recently Played'),
-                    ],
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                  child: Text(
-                    'Recent Songs',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    _songTile('Ocean Eyes', 'Artist Name'),
-                    _songTile('Midnight City', 'Artist Name'),
-                    _songTile('Golden Hour', 'Artist Name'),
-                  ]),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: _deepTeal,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: _mint.withValues(alpha: 0.2)),
-                    ),
-                    child: Row(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
-                          Icons.settings_outlined,
-                          color: _mint,
-                          size: 28,
+                        // ALBUM ARTWORK
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: item?.artUri != null
+                              ? Image.network(
+                                  item!.artUri.toString(),
+                                  height: artworkSize,
+                                  width: artworkSize,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) =>
+                                      _artworkPlaceholder(),
+                                )
+                              : _artworkPlaceholder(),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Account Settings',
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
+
+                        const SizedBox(height: 30),
+
+                        // SONG INFORMATION
+                        Text(
+                          item?.title ?? 'No Song Playing',
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 23,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const Icon(Icons.chevron_right, color: Colors.white70),
+
+                        const SizedBox(height: 8),
+
+                        Text(
+                          item?.artist ?? 'Select a song to begin',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFF8FA9A3),
+                            fontSize: 16,
+                          ),
+                        ),
+
+                        const SizedBox(height: 30),
+
+                        // PLAYBACK PROGRESS
+                        StreamBuilder<Duration?>(
+                          stream: handler.player.durationStream,
+                          initialData: handler.player.duration,
+                          builder: (context, durationSnapshot) {
+                            final duration =
+                                durationSnapshot.data ??
+                                item?.duration ??
+                                Duration.zero;
+
+                            final maxValue = duration.inMilliseconds > 0
+                                ? duration.inMilliseconds.toDouble()
+                                : 1.0;
+
+                            return StreamBuilder<Duration>(
+                              stream: handler.player.positionStream,
+                              initialData: handler.player.position,
+                              builder: (context, positionSnapshot) {
+                                final position =
+                                    positionSnapshot.data ?? Duration.zero;
+
+                                final currentValue =
+                                    (_dragValue ??
+                                            position.inMilliseconds.toDouble())
+                                        .clamp(0.0, maxValue)
+                                        .toDouble();
+
+                                return Column(
+                                  children: [
+                                    Slider(
+                                      value: currentValue,
+                                      min: 0,
+                                      max: maxValue,
+                                      activeColor: const Color(0xFF7DE5D0),
+                                      inactiveColor: const Color(0xFF34504A),
+                                      onChanged: duration > Duration.zero
+                                          ? (value) {
+                                              setState(() {
+                                                _dragValue = value;
+                                              });
+                                            }
+                                          : null,
+                                      onChangeEnd: duration > Duration.zero
+                                          ? (value) async {
+                                              await handler.seek(
+                                                Duration(
+                                                  milliseconds: value.round(),
+                                                ),
+                                              );
+
+                                              if (mounted) {
+                                                setState(() {
+                                                  _dragValue = null;
+                                                });
+                                              }
+                                            }
+                                          : null,
+                                    ),
+
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            formatDuration(
+                                              Duration(
+                                                milliseconds: currentValue
+                                                    .round(),
+                                              ),
+                                            ),
+                                            style: const TextStyle(
+                                              color: Colors.white70,
+                                            ),
+                                          ),
+                                          Text(
+                                            formatDuration(duration),
+                                            style: const TextStyle(
+                                              color: Colors.white70,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+
+                        const SizedBox(height: 30),
+
+                        // PLAYBACK CONTROLS
+                        StreamBuilder<bool>(
+                          stream: handler.player.playingStream,
+                          initialData: handler.player.playing,
+                          builder: (context, playingSnapshot) {
+                            final playing = playingSnapshot.data ?? false;
+
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                IconButton(
+                                  onPressed: () => handler.skipToPrevious(),
+                                  icon: const Icon(
+                                    Icons.skip_previous_rounded,
+                                    color: Colors.white,
+                                    size: 38,
+                                  ),
+                                ),
+
+                                const SizedBox(width: 25),
+
+                                Container(
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF7DE5D0),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  // for debugging: print when the play/pause button is pressed
+                                  child: IconButton(
+                                    onPressed: () async {
+                                      debugPrint('⏸️ PAUSE BUTTON PRESSED');
+
+                                      if (playing) {
+                                        await handler.pause();
+                                        debugPrint('⏸️ SONG PAUSED');
+                                      } else {
+                                        await handler.play();
+                                        debugPrint('▶️ SONG PLAYING');
+                                      }
+                                    },
+                                    icon: Icon(
+                                      playing
+                                          ? Icons.pause_rounded
+                                          : Icons.play_arrow_rounded,
+                                      color: const Color(0xFF173F3E),
+                                      size: 42,
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(width: 25),
+
+                                IconButton(
+                                  onPressed: () => handler.skipToNext(),
+                                  icon: const Icon(
+                                    Icons.skip_next_rounded,
+                                    color: Colors.white,
+                                    size: 38,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
+              );
+            },
+          );
+        },
       ),
     );
   }
 
-  Widget _stat(IconData icon, String count, String label) {
-    return Expanded(
-      child: Column(
-        children: [
-          Icon(icon, color: _mint, size: 25),
-          const SizedBox(height: 6),
-          Text(
-            count,
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(color: Colors.white70, fontSize: 9),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _songTile(String title, String artist) {
+  Widget _artworkPlaceholder() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(10),
+      height: 300,
+      width: 300,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF414C4B), Color(0xFF1B3B3D)],
-        ),
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFF234440),
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            backgroundColor: Colors.white,
-            child: Icon(Icons.music_note, color: _deepTeal),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  artist,
-                  style: GoogleFonts.inter(color: Colors.white70, fontSize: 10),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(Icons.play_circle_outline, color: _mint),
-        ],
+      child: const Icon(
+        Icons.music_note_rounded,
+        size: 100,
+        color: Color(0xFF7DE5D0),
       ),
     );
   }

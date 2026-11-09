@@ -1,19 +1,34 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const background = Color(0xFF001F1D);
-  static const cardBackground = Color(0xFF001513);
+  // Main backgrounds
+  static const background = Color(0xFF191919);
+  static const cardBackground = Color(0xFF242424);
+  static const card = Color(0xFF303030);
 
-  static const primary = Color(0xFF27D9A4);
-  static const primaryDark = Color(0xFF18B98A);
+  // Brand colours
+  static const primary = Color(0xFF91EBD5);
+  static const primaryDark = Color(0xFF419B8C);
+  static const tealDark = Color(0xFF183B38);
 
+  // Text
   static const textPrimary = Color(0xFFFFFFFF);
-  static const textSecondary = Color(0xFF9AAEAB);
+  static const textSecondary = Color(0xFFBDBDBD);
 
-  static const border = Color(0xFF087D72);
+  // Borders and accents
+  static const border = Color(0xFF419B8C);
   static const focusBorder = Color(0xFF8B3DFF);
+  static const divider = Color(0xFF354A46);
+}
 
-  static const divider = Color(0xFF14534E);
+/// The grey card gradient used by Home's song rows.
+/// Login, Register and Profile reuse it so everything matches.
+class AppGradients {
+  static const card = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [AppColors.card, AppColors.cardBackground],
+  );
 }
 
 class AppTheme {
@@ -24,8 +39,8 @@ class AppTheme {
 
     colorScheme: const ColorScheme.dark(
       primary: AppColors.primary,
-      secondary: AppColors.primary,
-      surface: AppColors.background,
+      secondary: AppColors.primaryDark,
+      surface: AppColors.cardBackground,
     ),
 
     textTheme: const TextTheme(
@@ -34,23 +49,66 @@ class AppTheme {
       bodySmall: TextStyle(color: AppColors.textSecondary),
     ),
 
+    appBarTheme: const AppBarTheme(
+      backgroundColor: AppColors.background,
+      foregroundColor: AppColors.textPrimary,
+      elevation: 0,
+    ),
+
+    cardTheme: CardThemeData(
+      color: AppColors.card,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    ),
+
+    iconTheme: const IconThemeData(
+      color: AppColors.primary,
+    ),
+
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.transparent,
+      fillColor: AppColors.cardBackground,
 
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 15,
+      ),
 
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(color: AppColors.border, width: 1),
+        borderSide: const BorderSide(
+          color: AppColors.border,
+          width: 1,
+        ),
       ),
 
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(color: AppColors.focusBorder, width: 2),
+        borderSide: const BorderSide(
+          color: AppColors.focusBorder,
+          width: 2,
+        ),
       ),
 
-      hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+      hintStyle: const TextStyle(
+        color: AppColors.textSecondary,
+        fontSize: 13,
+      ),
     ),
+
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.background,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(7),
+        ),
+      ),
+    ),
+
+    dividerColor: AppColors.divider,
   );
 }

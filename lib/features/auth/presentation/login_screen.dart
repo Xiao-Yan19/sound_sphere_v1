@@ -78,10 +78,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       children: [
         const SizedBox(height: 20),
         const AuthLogo(),
-        const SizedBox(height: 55),
+        const SizedBox(height: 50),
 
         const AuthTitle('Welcome Back'),
-        const SizedBox(height: 20),
+        const SizedBox(height: 22),
 
         // EMAIL
         const AuthFieldLabel('Email address'),
@@ -128,8 +128,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               'Forgot Password ?',
               style: GoogleFonts.inter(
                 fontSize: 10,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                color: AuthColors.mint,
               ),
             ),
           ),
@@ -147,46 +147,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           isLoading: _isLoading,
           onPressed: _submit,
         ),
-        const SizedBox(height: 42),
+        const SizedBox(height: 38),
 
         // OR DIVIDER
         const _OrDivider(),
-        const SizedBox(height: 27),
+        const SizedBox(height: 24),
 
         // GOOGLE BUTTON (decorative until Google sign-in is built)
-        SizedBox(
-          width: double.infinity,
-          height: 40,
-          child: OutlinedButton(
-            onPressed: () => _comingSoon('Google sign-in'),
-            style: OutlinedButton.styleFrom(
-              backgroundColor: AuthColors.googleButton,
-              side: const BorderSide(color: AuthColors.googleButton),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'G',
-                  style: GoogleFonts.inter(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF00AFFF),
-                  ),
-                ),
-                const SizedBox(width: 7),
-                Text(
-                  'Continue with Google',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
+        AuthSecondaryButton(
+          label: 'Continue with Google',
+          onPressed: () => _comingSoon('Google sign-in'),
+          leading: Text(
+            'G',
+            style: GoogleFonts.inter(
+              fontSize: 21,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF00AFFF),
             ),
           ),
         ),
@@ -216,19 +192,19 @@ class _OrDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Expanded(child: Divider(color: AuthColors.icon, thickness: 1)),
+        const Expanded(child: Divider(color: AuthColors.divider, thickness: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Text(
             'or continue with',
             style: GoogleFonts.inter(
               fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
+              fontWeight: FontWeight.w500,
+              color: AuthColors.icon,
             ),
           ),
         ),
-        const Expanded(child: Divider(color: AuthColors.icon, thickness: 1)),
+        const Expanded(child: Divider(color: AuthColors.divider, thickness: 1)),
       ],
     );
   }

@@ -1,27 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../app/theme.dart';
+
 // ================================================================
-// COLORS  (estimated from the Canva design - tweak with the
-// eyedropper in Canva if you want them pixel-exact)
+// COLORS - everything now comes from AppColors, so the auth screens
+// always match the Home screen. Change colors in theme.dart.
 // ================================================================
 
 class AuthColors {
-  static const background = Color(0xFF203F40);
-  static const fieldFill = Color(0xFF0C2222);
-  static const fieldBorder = Color(0xFF4E9F93);
-  static const fieldBorderFocused = Color(0xFF8CEBDD);
-  static const hint = Color(0xFF5E8D88);
-  static const inputText = Color(0xFFD9E6E4);
-  static const icon = Color(0xFFB8C8C8);
-  static const mint = Color(0xFF8DEFD3);
-  static const onMint = Color(0xFF173536);
-  static const googleButton = Color(0xFF459A8C);
+  static const background = AppColors.background;
+  static const fieldFill = AppColors.cardBackground;
+  static const fieldBorder = AppColors.primaryDark;
+  static const fieldBorderFocused = AppColors.primary;
+  static const hint = Color(0xFF8A8A8A);
+  static const inputText = AppColors.textPrimary;
+  static const icon = AppColors.textSecondary;
+  static const mint = AppColors.primary;
+  static const onMint = AppColors.background;
+  static const divider = AppColors.divider;
+  static const googleButton = AppColors.card;
   static const error = Color(0xFFFF9C94);
 }
 
 // ================================================================
-// PAGE SHELL (solid background, scrollable)
+// PAGE SHELL (flat Home background, scrollable)
 // ================================================================
 
 class AuthScaffold extends StatelessWidget {
@@ -97,7 +100,7 @@ class AuthLogo extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 9,
               fontWeight: FontWeight.w500,
-              color: Colors.white,
+              color: AppColors.textSecondary,
             ),
           ),
         ],
@@ -107,7 +110,7 @@ class AuthLogo extends StatelessWidget {
 }
 
 // ================================================================
-// TITLE + LABEL
+// TITLE (same bold mint style as Home's section titles) + LABEL
 // ================================================================
 
 class AuthTitle extends StatelessWidget {
@@ -117,12 +120,19 @@ class AuthTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: GoogleFonts.inter(
-        fontSize: 22,
-        fontWeight: FontWeight.w600,
-        color: Colors.white,
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          text,
+          style: GoogleFonts.inter(
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.8,
+            color: AuthColors.mint,
+          ),
+        ),
       ),
     );
   }
@@ -147,7 +157,7 @@ class AuthFieldLabel extends StatelessWidget {
 }
 
 // ================================================================
-// TEXT FIELD  (dark fill + mint border, same on both screens)
+// TEXT FIELD  (Home card color, teal border, mint when focused)
 // ================================================================
 
 class AuthTextField extends StatelessWidget {
@@ -177,14 +187,14 @@ class AuthTextField extends StatelessWidget {
   final bool enabled;
 
   OutlineInputBorder _border(Color color, double width) => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(10),
         borderSide: BorderSide(color: color, width: width),
       );
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 45,
+      height: 46,
       child: TextField(
         controller: controller,
         enabled: enabled,
@@ -242,9 +252,10 @@ class AuthVisibilityToggle extends StatelessWidget {
 }
 
 // ================================================================
-// BUTTON (shows a spinner while loading)
+// BUTTONS
 // ================================================================
 
+/// Mint button with dark text (shows a spinner while loading).
 class AuthPrimaryButton extends StatelessWidget {
   const AuthPrimaryButton({
     super.key,
@@ -261,7 +272,7 @@ class AuthPrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 40,
+      height: 44,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
@@ -271,7 +282,7 @@ class AuthPrimaryButton extends StatelessWidget {
           disabledForegroundColor: AuthColors.onMint,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(10),
           ),
         ),
         child: isLoading
@@ -287,7 +298,7 @@ class AuthPrimaryButton extends StatelessWidget {
                 label,
                 style: GoogleFonts.inter(
                   fontSize: 13,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
       ),
@@ -295,8 +306,62 @@ class AuthPrimaryButton extends StatelessWidget {
   }
 }
 
+/// Grey gradient button, same look as Home's song rows
+/// (used for "Continue with Google").
+class AuthSecondaryButton extends StatelessWidget {
+  const AuthSecondaryButton({
+    super.key,
+    required this.label,
+    required this.leading,
+    required this.onPressed,
+  });
+
+  final String label;
+  final Widget leading;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(10);
+
+    return SizedBox(
+      width: double.infinity,
+      height: 44,
+      child: Material(
+        color: Colors.transparent,
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: AppGradients.card,
+            borderRadius: radius,
+            border: Border.all(color: AuthColors.divider),
+          ),
+          child: InkWell(
+            borderRadius: radius,
+            onTap: onPressed,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                leading,
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ================================================================
-// ERROR TEXT (keeps the Canva layout; appears only when needed)
+// ERROR TEXT (keeps the layout; appears only when needed)
 // ================================================================
 
 class AuthErrorText extends StatelessWidget {
@@ -342,7 +407,10 @@ class AuthBottomLink extends StatelessWidget {
         children: [
           Text(
             '$prompt  ',
-            style: GoogleFonts.inter(fontSize: 12, color: Colors.white),
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
           ),
           GestureDetector(
             behavior: HitTestBehavior.opaque,

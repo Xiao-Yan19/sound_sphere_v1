@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sound_sphere_v1/app/theme.dart';
 
 import 'dart:async';
 
@@ -16,11 +17,11 @@ import 'package:audio_service/audio_service.dart';
 import '../../player/application/audio_handler_provider.dart';
 import '../../player/presentation/player_screen.dart';
 
-const Color _mint = Color(0xFF82E6D1);
-const Color _darkTeal = Color(0xFF173536);
-const Color _deepTeal = Color(0xFF203F40);
-const Color _mutedTeal = Color(0xFF365B5C);
-const Color _lavender = Color(0xFFB6C5FF);
+const Color _mint = AppColors.primary;
+const Color _darkTeal = AppColors.background;
+const Color _deepTeal = AppColors.cardBackground;
+const Color _mutedTeal = AppColors.textSecondary;
+const Color _lavender = AppColors.primary;
 
 class HomeScreen extends ConsumerStatefulWidget {
   final bool isAuthenticated;
@@ -49,6 +50,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Timer? _quickPickTimer;
   int _quickPickCount = 0;
   int _quickPickIndex = 0;
+
+  bool _playerOpen = false;
+
+  void _openPlayer() {
+    if (_playerOpen) return;
+    _playerOpen = true;
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const PlayerScreen()))
+        .whenComplete(() => _playerOpen = false);
+  }
 
   @override
   void initState() {
@@ -132,10 +143,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               onTap: item == null
                   ? null
                   : () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const PlayerScreen()),
-                      );
+                      _openPlayer();
                     },
               child: Column(
                 children: [
@@ -240,6 +248,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final handler = ref.read(audioHandlerProvider);
 
+    _openPlayer(); // open immediately, the song loads while it's visible
+
     try {
       await handler.playUrl(
         url: track.audioUrl!,
@@ -248,16 +258,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         album: track.albumName,
         artworkUrl: track.imageUrl,
       );
-
-      if (!mounted) return;
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const PlayerScreen()),
-      );
     } catch (error) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Playback failed: $error')));
     }
@@ -268,13 +270,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       backgroundColor: _darkTeal,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF173536), Color(0xFF284A4C), Color(0xFF536F7A)],
-          ),
-        ),
+        decoration: const BoxDecoration(color: AppColors.background),
         child: SafeArea(
           bottom: false,
           child: Stack(
@@ -343,12 +339,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Row(
             children: [
               GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const PlayerScreen()),
-                  );
-                },
+                onTap: _openPlayer,
                 child: Row(
                   children: [
                     ClipRRect(
@@ -539,9 +530,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               duration: const Duration(milliseconds: 180),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFF3E6A60)
-                    : const Color(0xFF25423F),
+                color: isSelected ? AppColors.primary : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isSelected
@@ -711,7 +700,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                         width: s.width,
                                         verticalText: s.t > 0.8,
                                         color: Color.lerp(
-                                          const Color(0xFFD9F7EA),
+                                          AppColors.card,
                                           s.index.isEven
                                               ? const Color(0xFFA0D6CE)
                                               : const Color(0xFF8DEBD0),
@@ -900,7 +889,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         gradient: const LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [Color(0xFF4A5655), Color(0xFF2A4547)],
+                          colors: [AppColors.card, AppColors.cardBackground],
                         ),
                         borderRadius: BorderRadius.circular(8),
                         image:
@@ -1001,7 +990,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       gradient: const LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Color(0xFF414C4B), Color(0xFF1B3B3D)],
+                        colors: [AppColors.card, AppColors.cardBackground],
                       ),
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -1116,7 +1105,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Color(0xFF3A5254), Color(0xFF2A4345)],
+                        colors: [AppColors.card, AppColors.background],
                       ),
                     ),
                   ),
