@@ -1,6 +1,7 @@
+
 class ApiConfig {
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://127.0.0.1:5000',
+    defaultValue: 'https://sound-sphere-v1-backend.onrender.com',
   );
 }
