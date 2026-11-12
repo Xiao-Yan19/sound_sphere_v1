@@ -18,6 +18,10 @@ import '../../music/presentation/search_screen.dart';
 import '../../player/application/audio_handler_provider.dart';
 import '../../player/presentation/player_screen.dart';
 
+import '../../music/application/liked_songs_provider.dart';
+import '../../music/presentation/liked_songs_screen.dart';
+import '../../music/presentation/library_screen.dart';
+
 const Color _mint = AppColors.primary;
 const Color _darkTeal = AppColors.background;
 const Color _deepTeal = AppColors.cardBackground;
@@ -34,16 +38,15 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  String selectedMood = 'Relax';
+  String selectedMood = 'All';
   int selectedTab = 2;
 
-  final Set<int> likedSongs = {1};
-
   final List<String> moods = [
+    'All',
     'Relax',
     'Romance',
     'Workout',
-    'FeelGood',
+    'Feel Good',
     'Sleep',
   ];
   final PageController _quickPickController = PageController();
@@ -53,6 +56,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _quickPickIndex = 0;
 
   bool _playerOpen = false;
+
+  void _goToHome() {
+    setState(() {
+      selectedTab = 2;
+    });
+  }
 
   void _openPlayer() {
     if (_playerOpen) return;
@@ -86,16 +95,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _quickPickTimer?.cancel();
     _quickPickController.dispose();
     super.dispose();
-  }
-
-  void toggleLike(int index) {
-    setState(() {
-      if (likedSongs.contains(index)) {
-        likedSongs.remove(index);
-      } else {
-        likedSongs.add(index);
-      }
-    });
   }
 
   Widget _buildCenterMiniPlayer() {
@@ -285,28 +284,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             bottom: false,
             child: Stack(
               children: [
-                SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 200),
+                Positioned.fill(
                   child: selectedTab == 1
-                      ? const SearchScreen()
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildHeader(),
-                            _buildMoodFilters(),
-                            const SizedBox(height: 28),
-                            _buildSectionTitle('Quick Picks'),
-                            const SizedBox(height: 10),
-                            _buildQuickPicks(),
-                            const SizedBox(height: 18),
-                            _buildSectionTitle('Hot & Trending'),
-                            const SizedBox(height: 10),
-                            _buildTrending(),
-                            const SizedBox(height: 18),
-                            _buildSectionTitle('Popular Picks'),
-                            const SizedBox(height: 10),
-                            _buildPopular(),
-                          ],
+                      ? SearchScreen(onGoHome: _goToHome)
+                      : selectedTab == 3
+                      ? LikedSongsScreen(onGoHome: _goToHome)
+                      : selectedTab == 4
+                      ? LibraryScreen(onGoHome: _goToHome)
+                      : SingleChildScrollView(
+                          padding: const EdgeInsets.only(bottom: 200),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildHeader(),
+                              _buildMoodFilters(),
+                              const SizedBox(height: 28),
+                              _buildSectionTitle('Quick Picks'),
+                              const SizedBox(height: 10),
+                              _buildQuickPicks(),
+                              const SizedBox(height: 18),
+                              _buildSectionTitle('Hot & Trending'),
+                              const SizedBox(height: 10),
+                              _buildTrending(),
+                              const SizedBox(height: 18),
+                              _buildSectionTitle('Popular Picks'),
+                              const SizedBox(height: 10),
+                              _buildPopular(),
+                            ],
+                          ),
                         ),
                 ),
                 Align(
@@ -528,9 +533,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           return GestureDetector(
             onTap: () {
+              if (selectedMood == mood) return;
+
               setState(() {
                 selectedMood = mood;
+                _quickPickIndex = 0;
               });
+
+              if (_quickPickController.hasClients) {
+                _quickPickController.jumpToPage(0);
+              }
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
@@ -631,132 +643,134 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildQuickPicks() {
-    return ref
-        .watch(trendingTracksProvider)
-        .when(
-          loading: () => const SizedBox(
-            height: 195,
-            child: Center(child: CircularProgressIndicator(color: _mint)),
+    final tracksAsync = selectedMood == 'All'
+        ? ref.watch(trendingTracksProvider)
+        : ref.watch(moodTracksProvider(selectedMood));
+
+    return tracksAsync.when(
+      loading: () => const SizedBox(
+        height: 195,
+        child: Center(child: CircularProgressIndicator(color: _mint)),
+      ),
+      error: (error, stack) => const SizedBox(
+        height: 100,
+        child: Center(
+          child: Text(
+            'Could not load tracks.',
+            style: TextStyle(color: Colors.white70),
           ),
-          error: (error, stack) => const SizedBox(
+        ),
+      ),
+      data: (tracks) {
+        if (tracks.isEmpty) {
+          return const SizedBox(
             height: 100,
             child: Center(
               child: Text(
-                'Could not load tracks.',
+                'No tracks available.',
                 style: TextStyle(color: Colors.white70),
               ),
             ),
-          ),
-          data: (tracks) {
-            if (tracks.isEmpty) {
-              return const SizedBox(
-                height: 100,
-                child: Center(
-                  child: Text(
-                    'No tracks available.',
-                    style: TextStyle(color: Colors.white70),
+          );
+        }
+
+        _quickPickCount = tracks.length;
+
+        double currentPage() {
+          if (_quickPickController.hasClients &&
+              _quickPickController.position.hasContentDimensions) {
+            return (_quickPickController.page ??
+                    _quickPickController.initialPage.toDouble())
+                .clamp(0.0, (tracks.length - 1).toDouble())
+                .toDouble();
+          }
+          return _quickPickController.initialPage.toDouble();
+        }
+
+        return SizedBox(
+          height: 195,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+
+              return Stack(
+                children: [
+                  // Visual layer: cards positioned from the page value.
+                  Positioned.fill(
+                    child: ClipRect(
+                      child: AnimatedBuilder(
+                        animation: _quickPickController,
+                        builder: (context, _) {
+                          final slots = _quickPickSlots(
+                            currentPage(),
+                            width,
+                            tracks.length,
+                          );
+
+                          return Stack(
+                            children: [
+                              for (final s in slots)
+                                Positioned(
+                                  left: s.left,
+                                  top: 0,
+                                  bottom: 0,
+                                  width: s.width,
+                                  child: _quickPickCard(
+                                    track: tracks[s.index],
+                                    width: s.width,
+                                    verticalText: s.t > 0.8,
+                                    color: Color.lerp(
+                                      AppColors.card,
+                                      s.index.isEven
+                                          ? const Color(0xFFA0D6CE)
+                                          : const Color(0xFF8DEBD0),
+                                      s.t,
+                                    )!,
+                                    radius: 25 + 10 * s.t,
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
                   ),
-                ),
-              );
-            }
 
-            _quickPickCount = tracks.length;
-
-            double currentPage() {
-              if (_quickPickController.hasClients &&
-                  _quickPickController.position.hasContentDimensions) {
-                return (_quickPickController.page ??
-                        _quickPickController.initialPage.toDouble())
-                    .clamp(0.0, (tracks.length - 1).toDouble())
-                    .toDouble();
-              }
-              return _quickPickController.initialPage.toDouble();
-            }
-
-            return SizedBox(
-              height: 195,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final width = constraints.maxWidth;
-
-                  return Stack(
-                    children: [
-                      // Visual layer: cards positioned from the page value.
-                      Positioned.fill(
-                        child: ClipRect(
-                          child: AnimatedBuilder(
-                            animation: _quickPickController,
-                            builder: (context, _) {
-                              final slots = _quickPickSlots(
-                                currentPage(),
-                                width,
-                                tracks.length,
-                              );
-
-                              return Stack(
-                                children: [
-                                  for (final s in slots)
-                                    Positioned(
-                                      left: s.left,
-                                      top: 0,
-                                      bottom: 0,
-                                      width: s.width,
-                                      child: _quickPickCard(
-                                        track: tracks[s.index],
-                                        width: s.width,
-                                        verticalText: s.t > 0.8,
-                                        color: Color.lerp(
-                                          AppColors.card,
-                                          s.index.isEven
-                                              ? const Color(0xFFA0D6CE)
-                                              : const Color(0xFF8DEBD0),
-                                          s.t,
-                                        )!,
-                                        radius: 25 + 10 * s.t,
-                                      ),
-                                    ),
-                                ],
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-
-                      // Gesture layer: swipe changes the page, tap plays the card.
-                      Positioned.fill(
-                        child: PageView.builder(
-                          controller: _quickPickController,
-                          itemCount: tracks.length,
-                          onPageChanged: (index) => _quickPickIndex = index,
-                          itemBuilder: (context, index) {
-                            return GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTapUp: (details) {
-                                final dx = details.localPosition.dx;
-                                final slots = _quickPickSlots(
-                                  currentPage(),
-                                  width,
-                                  tracks.length,
-                                );
-
-                                for (final s in slots) {
-                                  if (dx >= s.left && dx <= s.left + s.width) {
-                                    playMusicTrack(tracks[s.index]);
-                                    break;
-                                  }
-                                }
-                              },
+                  // Gesture layer: swipe changes the page, tap plays the card.
+                  Positioned.fill(
+                    child: PageView.builder(
+                      controller: _quickPickController,
+                      itemCount: tracks.length,
+                      onPageChanged: (index) => _quickPickIndex = index,
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTapUp: (details) {
+                            final dx = details.localPosition.dx;
+                            final slots = _quickPickSlots(
+                              currentPage(),
+                              width,
+                              tracks.length,
                             );
+
+                            for (final s in slots) {
+                              if (dx >= s.left && dx <= s.left + s.width) {
+                                playMusicTrack(tracks[s.index]);
+                                break;
+                              }
+                            }
                           },
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            );
-          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         );
+      },
+    );
   }
 
   Widget _quickPickCard({
@@ -949,6 +963,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // POPULAR PICKS
 
   Widget _buildPopular() {
+    // Get liked songs safely from the AsyncNotifier provider.
+    final List<MusicTrack> likedTracks =
+        ref.watch(likedSongsProvider).asData?.value ?? <MusicTrack>[];
+
+    // Compare songs using their unique IDs.
+    final Set<String> likedTrackIds = likedTracks
+        .map((MusicTrack track) => track.id)
+        .toSet();
+
     return ref
         .watch(trendingTracksProvider)
         .when(
@@ -956,6 +979,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             padding: EdgeInsets.all(25),
             child: Center(child: CircularProgressIndicator(color: _mint)),
           ),
+
           error: (error, stack) => const Padding(
             padding: EdgeInsets.all(20),
             child: Center(
@@ -965,6 +989,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
           ),
+
           data: (tracks) {
             if (tracks.isEmpty) {
               return const Padding(
@@ -983,15 +1008,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: tracks.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
+
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+
               itemBuilder: (context, index) {
                 final track = tracks[index];
 
+                final bool isLiked = likedTrackIds.contains(track.id);
+
                 return GestureDetector(
                   onTap: () => playMusicTrack(track),
+
                   child: Container(
                     height: 74,
                     padding: const EdgeInsets.symmetric(horizontal: 9),
+
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         begin: Alignment.topCenter,
@@ -1000,8 +1031,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       borderRadius: BorderRadius.circular(10),
                     ),
+
                     child: Row(
                       children: [
+                        // Track artwork
                         ClipRRect(
                           borderRadius: BorderRadius.circular(29),
                           child:
@@ -1012,7 +1045,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   width: 58,
                                   height: 58,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => const SizedBox(
+                                  errorBuilder: (_, __, ___) => const SizedBox(
                                     width: 58,
                                     height: 58,
                                     child: Icon(
@@ -1030,7 +1063,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ),
                                 ),
                         ),
+
                         const SizedBox(width: 11),
+
+                        // Track information
                         Expanded(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -1046,7 +1082,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   color: Colors.white,
                                 ),
                               ),
+
                               const SizedBox(height: 3),
+
                               Text(
                                 track.artistName,
                                 maxLines: 1,
@@ -1059,18 +1097,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ],
                           ),
                         ),
+
+                        // Like / Unlike button
                         IconButton(
-                          tooltip: likedSongs.contains(index)
-                              ? 'Unlike song'
-                              : 'Like song',
-                          onPressed: () => toggleLike(index),
+                          tooltip: isLiked ? 'Unlike song' : 'Like song',
+
+                          onPressed: () {
+                            ref
+                                .read(likedSongsProvider.notifier)
+                                .toggleLike(track);
+                          },
+
                           icon: Icon(
-                            likedSongs.contains(index)
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            color: likedSongs.contains(index)
-                                ? _mint
-                                : Colors.white70,
+                            isLiked ? Icons.favorite : Icons.favorite_border,
+                            color: isLiked ? _mint : Colors.white70,
                           ),
                         ),
                       ],

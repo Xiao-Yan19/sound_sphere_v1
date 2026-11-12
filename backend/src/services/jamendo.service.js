@@ -65,6 +65,38 @@ export const getPopularTracks = async (limit = 20, offset = 0) => {
     });
 };
 
+// Mood-based track collections.
+const MOOD_TAGS = {
+    relax: ["relaxation", "ambient", "chillout"],
+    romance: ["love", "romantic"],
+    workout: ["dance", "electronic", "rock"],
+    "feel-good": ["happy", "upbeat", "pop"],
+    sleep: ["ambient", "meditation", "instrumental"]
+};
+
+export const getTracksByMood = async (
+    mood,
+    limit = 20,
+    offset = 0
+) => {
+    const tags = MOOD_TAGS[mood];
+
+    if (!tags) {
+        return null;
+    }
+
+    return fetchTracks({
+        fuzzytags: tags.join(" "),
+        limit: String(limit),
+        offset: String(offset),
+        type: "single albumtrack",
+        audioformat: "mp32",
+        imagesize: "300",
+        include: "musicinfo"
+    });
+};
+
+
 // Get details of one track using its Jamendo ID.
 export const getTrackById = async (trackId) => {
     if (!trackId || !/^\d+$/.test(String(trackId))) {

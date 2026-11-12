@@ -28,4 +28,15 @@ class MusicTrack {
       duration: json['duration']?.toString(),
     );
   }
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'artist_name': artistName,
+      'album_name': albumName,
+      'audio': audioUrl,
+      'image': imageUrl,
+      'duration': duration,
+    };
+  }
 }

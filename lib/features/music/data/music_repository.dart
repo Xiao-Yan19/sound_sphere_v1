@@ -9,22 +9,36 @@ class MusicRepository {
 
   MusicRepository(this._dio);
 
-  Future<List<MusicTrack>> getTrendingTracks() async {
+  Future<List<MusicTrack>> getTracksByMood(String mood) async {
     try {
       final response = await _dio.get(
-        '/api/music/trending',
-        options: Options(
-          extra: {kSkipAuth: true},
-        ),
+        '/api/music/mood/$mood',
+        options: Options(extra: {kSkipAuth: true}),
       );
 
       final data = response.data as Map<String, dynamic>;
       final tracks = data['tracks'] as List<dynamic>? ?? [];
 
       return tracks
-          .map((track) => MusicTrack.fromJson(
-                track as Map<String, dynamic>,
-              ))
+          .map((track) => MusicTrack.fromJson(track as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  Future<List<MusicTrack>> getTrendingTracks() async {
+    try {
+      final response = await _dio.get(
+        '/api/music/trending',
+        options: Options(extra: {kSkipAuth: true}),
+      );
+
+      final data = response.data as Map<String, dynamic>;
+      final tracks = data['tracks'] as List<dynamic>? ?? [];
+
+      return tracks
+          .map((track) => MusicTrack.fromJson(track as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
@@ -38,18 +52,14 @@ class MusicRepository {
       final response = await _dio.get(
         '/api/music/search',
         queryParameters: {'q': query.trim()},
-        options: Options(
-          extra: {kSkipAuth: true},
-        ),
+        options: Options(extra: {kSkipAuth: true}),
       );
 
       final data = response.data as Map<String, dynamic>;
       final tracks = data['tracks'] as List<dynamic>? ?? [];
 
       return tracks
-          .map((track) => MusicTrack.fromJson(
-                track as Map<String, dynamic>,
-              ))
+          .map((track) => MusicTrack.fromJson(track as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
@@ -60,9 +70,7 @@ class MusicRepository {
     try {
       final response = await _dio.get(
         '/api/music/$id',
-        options: Options(
-          extra: {kSkipAuth: true},
-        ),
+        options: Options(extra: {kSkipAuth: true}),
       );
 
       final data = response.data as Map<String, dynamic>;
@@ -70,9 +78,7 @@ class MusicRepository {
 
       if (track == null) return null;
 
-      return MusicTrack.fromJson(
-        track as Map<String, dynamic>,
-      );
+      return MusicTrack.fromJson(track as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

@@ -8,7 +8,9 @@ import '../data/models/music_track.dart';
 import '../../player/application/audio_handler_provider.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
-  const SearchScreen({super.key});
+  const SearchScreen({super.key, required this.onGoHome});
+
+  final VoidCallback onGoHome;
 
   @override
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
@@ -99,22 +101,39 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
 
-          const Text(
-            'Discover Music',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+          Row(
+            children: [
+              IconButton(
+                tooltip: 'Go to Home',
+                onPressed: widget.onGoHome,
+                icon: const Icon(Icons.home_rounded, color: _mint, size: 27),
+              ),
+
+              const SizedBox(width: 8),
+
+              const Expanded(
+                child: Text(
+                  'Discover Music',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 6),
 
-          const Text(
-            'Find your next favourite track',
-            style: TextStyle(fontSize: 13, color: _secondaryText),
+          const Padding(
+            padding: EdgeInsets.only(left: 8),
+            child: Text(
+              'Find your next favourite track',
+              style: TextStyle(fontSize: 13, color: _secondaryText),
+            ),
           ),
 
           const SizedBox(height: 22),

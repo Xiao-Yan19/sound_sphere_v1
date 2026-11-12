@@ -1,7 +1,8 @@
 import {
     searchTracks,
     getPopularTracks,
-    getTrackById
+    getTrackById,
+    getTracksByMood
 } from "../services/jamendo.service.js";
 
 // Validate pagination parameters.
@@ -70,5 +71,37 @@ export const getMusicById = async (req, res) => {
     return res.status(200).json({
         success: true,
         track
+    });
+};
+
+
+// Get tracks based on mood.
+export const getMoodMusic = async (req, res) => {
+    const mood = req.params.mood.toLowerCase();
+
+    const tracks = await getTracksByMood(
+        mood,
+        ...Object.values(getPagination(req))
+    );
+
+    if (tracks === null) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid mood",
+            supportedMoods: [
+                "relax",
+                "romance",
+                "workout",
+                "feel-good",
+                "sleep"
+            ]
+        });
+    }
+
+    return res.status(200).json({
+        success: true,
+        mood,
+        count: tracks.length,
+        tracks
     });
 };
