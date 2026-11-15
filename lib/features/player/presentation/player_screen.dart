@@ -1,7 +1,13 @@
+
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:just_audio/just_audio.dart';
 
-import '../../player/application/audio_handler_provider.dart';
+import 'package:sound_sphere_v1/features/music/application/music_providers.dart';
+import 'package:sound_sphere_v1/features/music/data/models/music_track.dart';
+import 'package:sound_sphere_v1/features/player/application/audio_handler_provider.dart';
+import 'package:sound_sphere_v1/features/music/application/liked_songs_provider.dart';
 
 class PlayerScreen extends ConsumerStatefulWidget {
   const PlayerScreen({super.key});
@@ -16,26 +22,33 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   String formatDuration(Duration duration) {
     final minutes = duration.inMinutes;
     final seconds = duration.inSeconds.remainder(60);
-
     return '$minutes:${seconds.toString().padLeft(2, '0')}';
   }
 
-  // For Debugging: Track when the PlayerScreen is created and disposed
-  @override
-  void initState() {
-    super.initState();
-    debugPrint('🎵 PlayerScreen CREATED');
-  }
+  MusicTrack? _trackFromMediaItem(MediaItem? item) {
+    if (item == null) return null;
 
-  @override
-  void dispose() {
-    debugPrint('🎵 PlayerScreen DISPOSED');
-    super.dispose();
+    final trackId = item.extras?['trackId']?.toString();
+
+    // A real Jamendo ID is required to save the track correctly.
+    if (trackId == null || trackId.isEmpty) return null;
+
+    return MusicTrack(
+      id: trackId,
+      name: item.title,
+      artistName: item.artist ?? 'Unknown Artist',
+      albumName: item.album,
+      audioUrl: item.id,
+      imageUrl: item.artUri?.toString(),
+      duration: item.duration?.inSeconds.toString(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final handler = ref.watch(audioHandlerProvider);
+    final likedTracks =
+        ref.watch(likedSongsProvider).asData?.value ?? const <MusicTrack>[];
 
     return Scaffold(
       backgroundColor: const Color(0xFF101A19),
@@ -53,23 +66,25 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         ),
         centerTitle: true,
       ),
-
-      body: StreamBuilder(
+      body: StreamBuilder<MediaItem?>(
         stream: handler.mediaItem,
         builder: (context, snapshot) {
           final item = snapshot.data;
+          final currentTrack = _trackFromMediaItem(item);
+
+          final isLiked = currentTrack != null &&
+              likedTracks.any((track) => track.id == currentTrack.id);
 
           return LayoutBuilder(
             builder: (context, constraints) {
-              final artworkSize = (constraints.maxWidth - 48).clamp(
-                180.0,
-                320.0,
-              );
+              final artworkSize =
+                  (constraints.maxWidth - 48).clamp(180.0, 320.0);
 
               return SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  constraints:
+                      BoxConstraints(minHeight: constraints.maxHeight),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -87,7 +102,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                   height: artworkSize,
                                   width: artworkSize,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) =>
+                                  errorBuilder: (_, __, ___) =>
                                       _artworkPlaceholder(),
                                 )
                               : _artworkPlaceholder(),
@@ -119,15 +134,41 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                           ),
                         ),
 
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 8),
+
+                        // LIKE / UNLIKE
+                        IconButton(
+                          tooltip: currentTrack == null
+                              ? 'Track information unavailable'
+                              : isLiked
+                                  ? 'Unlike song'
+                                  : 'Like song',
+                          onPressed: currentTrack == null
+                              ? null
+                              : () async {
+                                  await ref
+                                      .read(likedSongsProvider.notifier)
+                                      .toggleLike(currentTrack);
+                                },
+                          icon: Icon(
+                            isLiked
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                            color: currentTrack == null
+                                ? Colors.white24
+                                : const Color(0xFF7DE5D0),
+                            size: 28,
+                          ),
+                        ),
+
+                        const SizedBox(height: 22),
 
                         // PLAYBACK PROGRESS
                         StreamBuilder<Duration?>(
                           stream: handler.player.durationStream,
                           initialData: handler.player.duration,
                           builder: (context, durationSnapshot) {
-                            final duration =
-                                durationSnapshot.data ??
+                            final duration = durationSnapshot.data ??
                                 item?.duration ??
                                 Duration.zero;
 
@@ -142,11 +183,10 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                 final position =
                                     positionSnapshot.data ?? Duration.zero;
 
-                                final currentValue =
-                                    (_dragValue ??
-                                            position.inMilliseconds.toDouble())
-                                        .clamp(0.0, maxValue)
-                                        .toDouble();
+                                final currentValue = (_dragValue ??
+                                        position.inMilliseconds.toDouble())
+                                    .clamp(0.0, maxValue)
+                                    .toDouble();
 
                                 return Column(
                                   children: [
@@ -154,8 +194,10 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                       value: currentValue,
                                       min: 0,
                                       max: maxValue,
-                                      activeColor: const Color(0xFF7DE5D0),
-                                      inactiveColor: const Color(0xFF34504A),
+                                      activeColor:
+                                          const Color(0xFF7DE5D0),
+                                      inactiveColor:
+                                          const Color(0xFF34504A),
                                       onChanged: duration > Duration.zero
                                           ? (value) {
                                               setState(() {
@@ -167,7 +209,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                           ? (value) async {
                                               await handler.seek(
                                                 Duration(
-                                                  milliseconds: value.round(),
+                                                  milliseconds:
+                                                      value.round(),
                                                 ),
                                               );
 
@@ -179,7 +222,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                             }
                                           : null,
                                     ),
-
                                     Padding(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 12,
@@ -191,8 +233,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                           Text(
                                             formatDuration(
                                               Duration(
-                                                milliseconds: currentValue
-                                                    .round(),
+                                                milliseconds:
+                                                    currentValue.round(),
                                               ),
                                             ),
                                             style: const TextStyle(
@@ -215,20 +257,82 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                           },
                         ),
 
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 24),
+
+                        // SHUFFLE AND REPEAT
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            StreamBuilder<bool>(
+                              stream:
+                                  handler.player.shuffleModeEnabledStream,
+                              initialData:
+                                  handler.player.shuffleModeEnabled,
+                              builder: (context, snapshot) {
+                                final shuffleEnabled =
+                                    snapshot.data ?? false;
+
+                                return IconButton(
+                                  tooltip: shuffleEnabled
+                                      ? 'Turn shuffle off'
+                                      : 'Turn shuffle on',
+                                  onPressed: () {
+                                    handler.setShuffle(!shuffleEnabled);
+                                  },
+                                  icon: Icon(
+                                    Icons.shuffle_rounded,
+                                    color: shuffleEnabled
+                                        ? const Color(0xFF7DE5D0)
+                                        : Colors.white54,
+                                    size: 25,
+                                  ),
+                                );
+                              },
+                            ),
+                            StreamBuilder<LoopMode>(
+                              stream: handler.player.loopModeStream,
+                              initialData: handler.player.loopMode,
+                              builder: (context, snapshot) {
+                                final repeatOne =
+                                    snapshot.data == LoopMode.one;
+
+                                return IconButton(
+                                  tooltip: repeatOne
+                                      ? 'Turn repeat one off'
+                                      : 'Repeat current song',
+                                  onPressed: () {
+                                    handler.toggleRepeatOne();
+                                  },
+                                  icon: Icon(
+                                    Icons.repeat_one_rounded,
+                                    color: repeatOne
+                                        ? const Color(0xFF7DE5D0)
+                                        : Colors.white54,
+                                    size: 25,
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 8),
 
                         // PLAYBACK CONTROLS
                         StreamBuilder<bool>(
                           stream: handler.player.playingStream,
                           initialData: handler.player.playing,
                           builder: (context, playingSnapshot) {
-                            final playing = playingSnapshot.data ?? false;
+                            final playing =
+                                playingSnapshot.data ?? false;
 
                             return Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 IconButton(
-                                  onPressed: () => handler.skipToPrevious(),
+                                  tooltip: 'Previous',
+                                  onPressed: () =>
+                                      handler.skipToPrevious(),
                                   icon: const Icon(
                                     Icons.skip_previous_rounded,
                                     color: Colors.white,
@@ -243,17 +347,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                     color: Color(0xFF7DE5D0),
                                     shape: BoxShape.circle,
                                   ),
-                                  // for debugging: print when the play/pause button is pressed
                                   child: IconButton(
                                     onPressed: () async {
-                                      debugPrint('⏸️ PAUSE BUTTON PRESSED');
-
                                       if (playing) {
                                         await handler.pause();
-                                        debugPrint('⏸️ SONG PAUSED');
                                       } else {
                                         await handler.play();
-                                        debugPrint('▶️ SONG PLAYING');
                                       }
                                     },
                                     icon: Icon(
@@ -269,6 +368,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                 const SizedBox(width: 25),
 
                                 IconButton(
+                                  tooltip: 'Next',
                                   onPressed: () => handler.skipToNext(),
                                   icon: const Icon(
                                     Icons.skip_next_rounded,

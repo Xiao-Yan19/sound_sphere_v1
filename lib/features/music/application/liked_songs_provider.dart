@@ -47,7 +47,7 @@ class LikedSongsNotifier extends AsyncNotifier<List<MusicTrack>> {
       }
 
       return songs;
-    } catch (e, stackTrace) {
+    } catch (e) {
       // Keep the provider usable if stored data is invalid.
       return <MusicTrack>[];
     }

@@ -1,22 +1,18 @@
-
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:sound_sphere_v1/app/theme.dart';
+
 import '../application/liked_songs_provider.dart';
 import '../../player/application/audio_handler_provider.dart';
 import '../../player/presentation/player_screen.dart';
 
 import 'liked_songs_screen.dart';
 
-
 class LibraryScreen extends ConsumerWidget {
-  const LibraryScreen({
-    super.key,
-    required this.onGoHome,
-  });
+  const LibraryScreen({super.key, required this.onGoHome});
 
   final VoidCallback onGoHome;
 
@@ -58,10 +54,7 @@ class LibraryScreen extends ConsumerWidget {
 
           Text(
             'Your music, all in one place.',
-            style: GoogleFonts.inter(
-              color: Colors.white60,
-              fontSize: 13,
-            ),
+            style: GoogleFonts.inter(color: Colors.white60, fontSize: 13),
           ),
 
           const SizedBox(height: 25),
@@ -69,11 +62,9 @@ class LibraryScreen extends ConsumerWidget {
           // Liked Songs collection
           likedAsync.when(
             loading: () => const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-              ),
+              child: CircularProgressIndicator(color: AppColors.primary),
             ),
-            error: (_, __) => const Text(
+            error: (_, _) => const Text(
               'Could not load your saved music.',
               style: TextStyle(color: Colors.white70),
             ),
@@ -81,9 +72,7 @@ class LibraryScreen extends ConsumerWidget {
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => _LikedSongsRoute(
-                      onGoHome: onGoHome,
-                    ),
+                    builder: (_) => _LikedSongsRoute(onGoHome: onGoHome),
                   ),
                 );
               },
@@ -92,10 +81,7 @@ class LibraryScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(18),
                   gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF287C72),
-                      Color(0xFF193C43),
-                    ],
+                    colors: [Color(0xFF287C72), Color(0xFF193C43)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -196,7 +182,7 @@ class LibraryScreen extends ConsumerWidget {
                           width: 52,
                           height: 52,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _musicIcon(),
+                          errorBuilder: (_, _, _) => _musicIcon(),
                         ),
                       )
                     : _musicIcon(),
@@ -221,9 +207,7 @@ class LibraryScreen extends ConsumerWidget {
                 ),
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const PlayerScreen(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const PlayerScreen()),
                   );
                 },
               );
@@ -242,19 +226,14 @@ class LibraryScreen extends ConsumerWidget {
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(9),
       ),
-      child: const Icon(
-        Icons.music_note_rounded,
-        color: AppColors.primary,
-      ),
+      child: const Icon(Icons.music_note_rounded, color: AppColors.primary),
     );
   }
 }
 
 // Opens Liked Songs from Library.
 class _LikedSongsRoute extends StatelessWidget {
-  const _LikedSongsRoute({
-    required this.onGoHome,
-  });
+  const _LikedSongsRoute({required this.onGoHome});
 
   final VoidCallback onGoHome;
 

@@ -54,6 +54,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref
           .read(authControllerProvider.notifier)
           .login(email: email, password: password);
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
       // Success: AuthGate swaps this screen for the home screen.
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
@@ -67,9 +70,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _comingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature is coming soon')),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('$feature is coming soon')));
   }
 
   @override

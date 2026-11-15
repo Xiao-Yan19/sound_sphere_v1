@@ -254,7 +254,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.only(bottom: 20),
           itemCount: tracks.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final track = tracks[index];
             return _buildTrackTile(track);
@@ -284,7 +284,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       width: 54,
                       height: 54,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildArtworkPlaceholder(),
+                      errorBuilder: (_, _, _) => _buildArtworkPlaceholder(),
                     )
                   : _buildArtworkPlaceholder(),
             ),

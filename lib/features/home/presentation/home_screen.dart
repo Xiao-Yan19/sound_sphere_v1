@@ -246,23 +246,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return;
     }
 
-    final handler = ref.read(audioHandlerProvider);
-
-    _openPlayer(); // open immediately, the song loads while it's visible
-
-    try {
-      await handler.playUrl(
-        url: track.audioUrl!,
-        title: track.name,
-        artist: track.artistName,
-        album: track.albumName,
-        artworkUrl: track.imageUrl,
-      );
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Playback failed: $error')));
-    }
+    // Use the queue method so the track ID is passed to PlayerScreen.
+    await playMusicQueue([track], 0);
   }
 
   @override
@@ -326,124 +311,126 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildMiniPlayer() {
-    final handler = ref.read(audioHandlerProvider);
+  // Widget _buildMiniPlayer() {
+  //   final handler = ref.read(audioHandlerProvider);
 
-    return StreamBuilder<MediaItem?>(
-      stream: handler.mediaItem,
-      builder: (context, snapshot) {
-        final item = snapshot.data;
+  //   return StreamBuilder<MediaItem?>(
+  //     stream: handler.mediaItem,
+  //     builder: (context, snapshot) {
+  //       final item = snapshot.data;
 
-        if (item == null) {
-          return const SizedBox(height: 5);
-        }
+  //       if (item == null) {
+  //         return const SizedBox(height: 5);
+  //       }
 
-        return Container(
-          height: 62,
-          margin: const EdgeInsets.symmetric(horizontal: 5),
-          padding: const EdgeInsets.symmetric(horizontal: 9),
-          decoration: BoxDecoration(
-            color: const Color(0xFF29494B),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _mint.withValues(alpha: 0.3)),
-          ),
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: _openPlayer,
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(9),
-                      child: item.artUri != null
-                          ? Image.network(
-                              item.artUri.toString(),
-                              width: 42,
-                              height: 42,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => _miniPlayerIcon(),
-                            )
-                          : _miniPlayerIcon(),
-                    ),
-                    const SizedBox(width: 9),
-                    SizedBox(
-                      width: 125,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            item.artist ?? 'Unknown Artist',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              StreamBuilder<PlaybackState>(
-                stream: handler.playbackState,
-                builder: (context, stateSnapshot) {
-                  final isPlaying = stateSnapshot.data?.playing ?? false;
+  //       return Container(
+  //         height: 62,
+  //         margin: const EdgeInsets.symmetric(horizontal: 5),
+  //         padding: const EdgeInsets.symmetric(horizontal: 9),
+  //         decoration: BoxDecoration(
+  //           color: const Color(0xFF29494B),
+  //           borderRadius: BorderRadius.circular(14),
+  //           border: Border.all(color: _mint.withValues(alpha: 0.3)),
+  //         ),
+  //         child: Row(
+  //           children: [
+  //             GestureDetector(
+  //               onTap: _openPlayer,
+  //               child: Row(
+  //                 children: [
+  //                   ClipRRect(
+  //                     borderRadius: BorderRadius.circular(9),
+  //                     child: item.artUri != null
+  //                         ? Image.network(
+  //                             item.artUri.toString(),
+  //                             width: 42,
+  //                             height: 42,
+  //                             fit: BoxFit.cover,
+  //                             errorBuilder: (_, _, _) => _miniPlayerIcon(),
+  //                           )
+  //                         : _miniPlayerIcon(),
+  //                   ),
+  //                   const SizedBox(width: 9),
+  //                   SizedBox(
+  //                     width: 125,
+  //                     child: Column(
+  //                       mainAxisAlignment: MainAxisAlignment.center,
+  //                       crossAxisAlignment: CrossAxisAlignment.start,
+  //                       children: [
+  //                         Text(
+  //                           item.title,
+  //                           maxLines: 1,
+  //                           overflow: TextOverflow.ellipsis,
+  //                           style: const TextStyle(
+  //                             color: Colors.white,
+  //                             fontSize: 12,
+  //                             fontWeight: FontWeight.w600,
+  //                           ),
+  //                         ),
+  //                         const SizedBox(height: 3),
+  //                         Text(
+  //                           item.artist ?? 'Unknown Artist',
+  //                           maxLines: 1,
+  //                           overflow: TextOverflow.ellipsis,
+  //                           style: const TextStyle(
+  //                             color: Colors.white70,
+  //                             fontSize: 10,
+  //                           ),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //             const Spacer(),
+  //             StreamBuilder<PlaybackState>(
+  //               stream: handler.playbackState,
+  //               builder: (context, stateSnapshot) {
+  //                 final isPlaying = stateSnapshot.data?.playing ?? false;
 
-                  return IconButton(
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () {
-                      if (isPlaying) {
-                        handler.pause();
-                      } else {
-                        handler.play();
-                      }
-                    },
-                    icon: Icon(
-                      isPlaying
-                          ? Icons.pause_rounded
-                          : Icons.play_arrow_rounded,
-                      color: _mint,
-                      size: 28,
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+  //                 return IconButton(
+  //                   visualDensity: VisualDensity.compact,
+  //                   onPressed: () {
+  //                     if (isPlaying) {
+  //                       handler.pause();
+  //                     } else {
+  //                       handler.play();
+  //                     }
+  //                   },
+  //                   icon: Icon(
+  //                     isPlaying
+  //                         ? Icons.pause_rounded
+  //                         : Icons.play_arrow_rounded,
+  //                     color: _mint,
+  //                     size: 28,
+  //                   ),
+  //                 );
+  //               },
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
-  Widget _miniPlayerIcon() {
-    return Container(
-      width: 44,
-      height: 44,
-      color: _darkTeal,
-      child: const Icon(Icons.music_note_rounded, color: _mint, size: 25),
-    );
-  }
+  // Widget _miniPlayerIcon() {
+  //   return Container(
+  //     width: 44,
+  //     height: 44,
+  //     color: _darkTeal,
+  //     child: const Icon(Icons.music_note_rounded, color: _mint, size: 25),
+  //   );
+  // }
 
   // HEADER
 
   Widget _buildHeader() {
     final authState = ref.watch(authControllerProvider);
     final user = authState.user;
+
+    final bool isAuthenticated = authState.status == AuthStatus.authenticated;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 18, 0),
@@ -466,7 +453,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           Expanded(
             child: Text(
-              authState.status == AuthStatus.authenticated
+              isAuthenticated
                   ? 'Welcome, ${user?.displayName ?? 'User'}'
                   : 'Welcome, Guest',
               maxLines: 1,
@@ -479,7 +466,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          if (!widget.isAuthenticated)
+          if (!isAuthenticated)
             TextButton(
               onPressed: () {
                 Navigator.of(
@@ -755,7 +742,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                             for (final s in slots) {
                               if (dx >= s.left && dx <= s.left + s.width) {
-                                playMusicTrack(tracks[s.index]);
+                                playMusicQueue(tracks, s.index);
                                 break;
                               }
                             }
@@ -845,7 +832,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   // HOT & TRENDING
-
   Widget _buildTrending() {
     return ref
         .watch(trendingTracksProvider)
@@ -902,7 +888,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   final track = tracks[index];
 
                   return GestureDetector(
-                    onTap: () => playMusicTrack(track),
+                    onTap: () => playMusicQueue(tracks, index),
                     child: Container(
                       width: 92,
                       decoration: BoxDecoration(
@@ -960,6 +946,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         );
   }
 
+  Future<void> playMusicQueue(
+    List<MusicTrack> tracks,
+    int selectedIndex,
+  ) async {
+    if (selectedIndex < 0 || selectedIndex >= tracks.length) return;
+
+    final selectedTrack = tracks[selectedIndex];
+
+    if (selectedTrack.audioUrl == null || selectedTrack.audioUrl!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Audio is unavailable for this track.')),
+      );
+      return;
+    }
+
+    final playableTracks = <MusicTrack>[];
+    var queueIndex = 0;
+
+    for (int i = 0; i < tracks.length; i++) {
+      final track = tracks[i];
+
+      if (track.audioUrl == null || track.audioUrl!.isEmpty) {
+        continue;
+      }
+
+      if (i == selectedIndex) {
+        queueIndex = playableTracks.length;
+      }
+
+      playableTracks.add(track);
+    }
+
+    final items = playableTracks.map((track) {
+      return MediaItem(
+        id: track.audioUrl!,
+        title: track.name,
+        artist: track.artistName,
+        album: track.albumName ?? 'SoundSphere',
+        artUri: track.imageUrl != null && track.imageUrl!.isNotEmpty
+            ? Uri.tryParse(track.imageUrl!)
+            : null,
+        extras: {'trackId': track.id},
+      );
+    }).toList();
+
+    final handler = ref.read(audioHandlerProvider);
+
+    _openPlayer();
+
+    try {
+      await handler.playQueue(items: items, initialIndex: queueIndex);
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Playback failed: $error')));
+    }
+  }
+
   // POPULAR PICKS
 
   Widget _buildPopular() {
@@ -1009,7 +1054,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: tracks.length,
 
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
 
               itemBuilder: (context, index) {
                 final track = tracks[index];
@@ -1045,7 +1090,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   width: 58,
                                   height: 58,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const SizedBox(
+                                  errorBuilder: (_, _, _) => const SizedBox(
                                     width: 58,
                                     height: 58,
                                     child: Icon(

@@ -28,8 +28,9 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   );
 });
 
-final authControllerProvider =
-    NotifierProvider<AuthController, AuthState>(AuthController.new);
+final authControllerProvider = NotifierProvider<AuthController, AuthState>(
+  AuthController.new,
+);
 
 // ---------------------------------------------------------------
 // State
@@ -49,6 +50,7 @@ class AuthState {
 // ---------------------------------------------------------------
 
 class AuthController extends Notifier<AuthState> {
+  int _authVersion = 0;
   @override
   AuthState build() {
     // Auto-login check as soon as the app starts
@@ -59,18 +61,28 @@ class AuthController extends Notifier<AuthState> {
   AuthRepository get _repo => ref.read(authRepositoryProvider);
 
   Future<void> restoreSession() async {
+    final version = _authVersion;
+
     try {
       final user = await _repo.restoreSession();
+
+      if (version != _authVersion) return;
+
       state = user == null
           ? const AuthState(status: AuthStatus.unauthenticated)
           : AuthState(status: AuthStatus.authenticated, user: user);
     } on ApiException {
+      if (version != _authVersion) return;
+
       state = const AuthState(status: AuthStatus.unauthenticated);
     }
   }
 
   Future<void> login({required String email, required String password}) async {
+    _authVersion++;
+
     final user = await _repo.login(email: email, password: password);
+
     state = AuthState(status: AuthStatus.authenticated, user: user);
   }
 
@@ -85,11 +97,16 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
+    _authVersion++;
+
     await _repo.logout();
+
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
   void handleSessionExpired() {
+    _authVersion++;
+
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 }
