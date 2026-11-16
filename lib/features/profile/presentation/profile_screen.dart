@@ -8,8 +8,6 @@ import '../../auth/application/auth_controller.dart';
 import '../../player/application/audio_handler_provider.dart';
 import '../../player/presentation/player_screen.dart';
 
-const Color _mint = AppColors.primary;
-
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -22,22 +20,28 @@ class ProfileScreen extends ConsumerWidget {
         title: Text(
           'Log out?',
           style: GoogleFonts.inter(
-            color: Colors.white,
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.w700,
           ),
         ),
         content: Text(
           'You can continue browsing SoundSphere as a guest.',
-          style: GoogleFonts.inter(color: Colors.white70),
+          style: GoogleFonts.inter(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel', style: TextStyle(color: _mint)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.primaryDark),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Log out', style: TextStyle(color: _mint)),
+            child: const Text(
+              'Log out',
+              style: TextStyle(color: AppColors.primaryDark),
+            ),
           ),
         ],
       ),
@@ -84,7 +88,7 @@ class ProfileScreen extends ConsumerWidget {
                     width: 42,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.white30,
+                      color: AppColors.border,
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
@@ -93,7 +97,7 @@ class ProfileScreen extends ConsumerWidget {
                 Text(
                   'Account Settings',
                   style: GoogleFonts.inter(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                   ),
@@ -103,32 +107,35 @@ class ProfileScreen extends ConsumerWidget {
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(
                     Icons.verified_user_outlined,
-                    color: _mint,
+                    color: AppColors.primaryDark,
                   ),
                   title: const Text(
                     'Account status',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: AppColors.textPrimary),
                   ),
                   subtitle: Text(
                     isAuthenticated ? 'Logged in' : 'Browsing as a guest',
-                    style: const TextStyle(color: Colors.white60),
+                    style: const TextStyle(color: AppColors.textSecondary),
                   ),
                 ),
-                const Divider(color: Colors.white12),
+                const Divider(color: AppColors.border),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.music_note_rounded, color: _mint),
+                  leading: const Icon(
+                    Icons.music_note_rounded,
+                    color: AppColors.primaryDark,
+                  ),
                   title: const Text(
                     'Music playback',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: AppColors.textPrimary),
                   ),
                   subtitle: const Text(
                     'Control playback from your player screen.',
-                    style: TextStyle(color: Colors.white60),
+                    style: TextStyle(color: AppColors.textSecondary),
                   ),
                 ),
                 if (isAuthenticated) ...[
-                  const Divider(color: Colors.white12),
+                  const Divider(color: AppColors.border),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(
@@ -177,14 +184,17 @@ class ProfileScreen extends ConsumerWidget {
                     IconButton(
                       tooltip: 'Back',
                       onPressed: () => Navigator.of(context).maybePop(),
-                      icon: const Icon(Icons.arrow_back, color: _mint),
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: AppColors.primaryDark,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'My Profile',
                         style: GoogleFonts.inter(
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                           fontSize: 21,
                           fontWeight: FontWeight.w700,
                         ),
@@ -194,7 +204,10 @@ class ProfileScreen extends ConsumerWidget {
                       tooltip: 'Account settings',
                       onPressed: () =>
                           _showAccountSettings(context, ref, isAuthenticated),
-                      icon: const Icon(Icons.settings_outlined, color: _mint),
+                      icon: const Icon(
+                        Icons.settings_outlined,
+                        color: AppColors.primaryDark,
+                      ),
                     ),
                   ],
                 ),
@@ -211,17 +224,20 @@ class ProfileScreen extends ConsumerWidget {
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: _mint, width: 2),
+                        border: Border.all(
+                          color: AppColors.primaryDark,
+                          width: 2,
+                        ),
                       ),
                       child: CircleAvatar(
                         radius: 49,
-                        backgroundColor: const Color(0xFFE8ECEB),
+                        backgroundColor: AppColors.peachPale,
                         child: Text(
                           displayName.isNotEmpty
                               ? displayName[0].toUpperCase()
                               : 'U',
                           style: GoogleFonts.inter(
-                            color: AppColors.cardBackground,
+                            color: AppColors.textPrimary,
                             fontSize: 40,
                             fontWeight: FontWeight.w700,
                           ),
@@ -232,7 +248,7 @@ class ProfileScreen extends ConsumerWidget {
                     Text(
                       displayName,
                       style: GoogleFonts.inter(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontSize: 25,
                         fontWeight: FontWeight.w700,
                       ),
@@ -255,8 +271,8 @@ class ProfileScreen extends ConsumerWidget {
                         icon: const Icon(Icons.arrow_back),
                         label: const Text('Back to Home to log in'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: _mint,
-                          side: const BorderSide(color: _mint),
+                          foregroundColor: AppColors.primaryDark,
+                          side: const BorderSide(color: AppColors.primaryDark),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -296,13 +312,13 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                     leading: const Icon(
                       Icons.settings_outlined,
-                      color: _mint,
+                      color: AppColors.primaryDark,
                       size: 28,
                     ),
                     title: Text(
                       'Account Settings',
                       style: GoogleFonts.inter(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -311,13 +327,13 @@ class ProfileScreen extends ConsumerWidget {
                           ? 'Manage your account'
                           : 'You are browsing as a guest',
                       style: const TextStyle(
-                        color: Colors.white60,
+                        color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
                     ),
                     trailing: const Icon(
                       Icons.chevron_right,
-                      color: Colors.white70,
+                      color: AppColors.textSecondary,
                     ),
                     onTap: () =>
                         _showAccountSettings(context, ref, isAuthenticated),
@@ -350,12 +366,16 @@ class ProfileScreen extends ConsumerWidget {
             ),
             child: Column(
               children: [
-                const Icon(Icons.music_off_rounded, color: _mint, size: 38),
+                const Icon(
+                  Icons.music_off_rounded,
+                  color: AppColors.primaryDark,
+                  size: 38,
+                ),
                 const SizedBox(height: 12),
                 Text(
                   'Nothing playing right now',
                   style: GoogleFonts.inter(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -363,7 +383,10 @@ class ProfileScreen extends ConsumerWidget {
                 const Text(
                   'Choose a track from Home or Search to start listening.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white60, fontSize: 12),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -375,30 +398,43 @@ class ProfileScreen extends ConsumerWidget {
           decoration: BoxDecoration(
             gradient: AppGradients.card,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _mint.withValues(alpha: 0.25)),
+            border: Border.all(
+              color: AppColors.primaryDark.withValues(alpha: 0.25),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Icon(Icons.graphic_eq_rounded, color: _mint, size: 19),
+                  const Icon(
+                    Icons.graphic_eq_rounded,
+                    color: AppColors.primaryDark,
+                    size: 19,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'NOW PLAYING',
                     style: GoogleFonts.inter(
-                      color: _mint,
+                      color: AppColors.primaryDark,
                       fontSize: 11,
                       letterSpacing: 1.5,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const Spacer(),
-                  const Icon(Icons.circle, color: _mint, size: 7),
+                  const Icon(
+                    Icons.circle,
+                    color: AppColors.primaryDark,
+                    size: 7,
+                  ),
                   const SizedBox(width: 5),
                   const Text(
                     'LIVE',
-                    style: TextStyle(color: Colors.white60, fontSize: 10),
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 10,
+                    ),
                   ),
                 ],
               ),
@@ -427,7 +463,7 @@ class ProfileScreen extends ConsumerWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
                           ),
@@ -438,7 +474,7 @@ class ProfileScreen extends ConsumerWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
-                            color: Colors.white60,
+                            color: AppColors.textSecondary,
                             fontSize: 12,
                           ),
                         ),
@@ -454,7 +490,7 @@ class ProfileScreen extends ConsumerWidget {
                           child: const Text(
                             'Open full player  →',
                             style: TextStyle(
-                              color: _mint,
+                              color: AppColors.primaryDark,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
@@ -470,7 +506,7 @@ class ProfileScreen extends ConsumerWidget {
 
                       return Container(
                         decoration: const BoxDecoration(
-                          color: _mint,
+                          color: AppColors.primaryDark,
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
@@ -505,8 +541,12 @@ class ProfileScreen extends ConsumerWidget {
     return Container(
       width: 66,
       height: 66,
-      color: AppColors.background,
-      child: const Icon(Icons.music_note_rounded, color: _mint, size: 30),
+      color: AppColors.peachPale,
+      child: const Icon(
+        Icons.music_note_rounded,
+        color: AppColors.primaryDark,
+        size: 30,
+      ),
     );
   }
 
@@ -523,7 +563,7 @@ class ProfileScreen extends ConsumerWidget {
               height: 1.05,
               fontWeight: FontWeight.w900,
               letterSpacing: -1.2,
-              color: _mint,
+              color: AppColors.primaryDark,
             ),
           ),
         ),

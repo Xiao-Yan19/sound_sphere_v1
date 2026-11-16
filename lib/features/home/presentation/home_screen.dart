@@ -22,11 +22,22 @@ import '../../music/application/liked_songs_provider.dart';
 import '../../music/presentation/liked_songs_screen.dart';
 import '../../music/presentation/library_screen.dart';
 
+// Centralized SoundSphere theme colours
 const Color _mint = AppColors.primary;
-const Color _darkTeal = AppColors.background;
-const Color _deepTeal = AppColors.cardBackground;
-const Color _mutedTeal = AppColors.textSecondary;
-const Color _lavender = AppColors.primary;
+const Color _deepTeal = AppColors.charcoalLight;
+const Color _ink = AppColors.textPrimary;
+const Color _mutedInk = AppColors.textSecondary;
+
+const Color _peach = AppColors.primary;
+const Color _coral = AppColors.primaryDark;
+const Color _softPeach = AppColors.peachLight;
+const Color _palePeach = AppColors.peachPale;
+
+const Color _cream = AppColors.background;
+const Color _white = AppColors.pureWhite;
+
+const Color _charcoal = AppColors.charcoal;
+const Color _charcoalLight = AppColors.charcoalLight;
 
 class HomeScreen extends ConsumerStatefulWidget {
   final bool isAuthenticated;
@@ -262,9 +273,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: _darkTeal,
+        backgroundColor: _cream,
         body: Container(
-          decoration: const BoxDecoration(color: AppColors.background),
+          decoration: const BoxDecoration(color: _cream),
           child: SafeArea(
             bottom: false,
             child: Stack(
@@ -328,7 +339,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   //         margin: const EdgeInsets.symmetric(horizontal: 5),
   //         padding: const EdgeInsets.symmetric(horizontal: 9),
   //         decoration: BoxDecoration(
-  //           color: const Color(0xFF29494B),
+  //           color: _charcoalLight,
   //           borderRadius: BorderRadius.circular(14),
   //           border: Border.all(color: _mint.withValues(alpha: 0.3)),
   //         ),
@@ -419,8 +430,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   //   return Container(
   //     width: 44,
   //     height: 44,
-  //     color: _darkTeal,
-  //     child: const Icon(Icons.music_note_rounded, color: _mint, size: 25),
+  //     color: _palePeach,
+  //     child: const Icon(Icons.music_note_rounded, color: _coral, size: 25),
   //   );
   // }
 
@@ -444,8 +455,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             },
             child: const CircleAvatar(
               radius: 19,
-              backgroundColor: Color(0xFFE8ECEB),
-              child: Icon(Icons.person, color: Color(0xFF7B8584), size: 29),
+              backgroundColor: _palePeach,
+              child: Icon(Icons.person, color: _mutedInk, size: 29),
             ),
           ),
 
@@ -459,9 +470,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
-                color: Colors.white,
+                color: _ink,
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -474,7 +485,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
               },
               style: TextButton.styleFrom(
-                foregroundColor: _mint,
+                foregroundColor: _coral,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
               child: Text(
@@ -490,14 +501,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             tooltip: 'Listening history',
             onPressed: () {},
             visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.access_time, color: _mint, size: 24),
+            icon: const Icon(Icons.access_time, color: _mutedInk, size: 23),
           ),
 
           IconButton(
             tooltip: 'Settings',
             onPressed: () {},
             visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.settings, color: _mint, size: 24),
+            icon: const Icon(Icons.settings, color: _mutedInk, size: 23),
           ),
         ],
       ),
@@ -535,7 +546,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               duration: const Duration(milliseconds: 180),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : Colors.transparent,
+                color: isSelected ? _peach : _palePeach.withValues(alpha: 0.55),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isSelected
@@ -549,7 +560,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: isSelected ? _ink : _mutedInk,
                   ),
                 ),
               ),
@@ -575,12 +586,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               height: 1.05,
               fontWeight: FontWeight.w900,
               letterSpacing: -1.3,
-              color: _lavender,
+              color: _ink,
               shadows: const [
                 Shadow(
-                  color: Color(0x553F4D85),
-                  offset: Offset(0, 3),
-                  blurRadius: 3,
+                  color: Color(0x18A36D58),
+                  offset: Offset(0, 2),
+                  blurRadius: 4,
                 ),
               ],
             ),
@@ -644,7 +655,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Center(
           child: Text(
             'Could not load tracks.',
-            style: TextStyle(color: Colors.white70),
+            style: TextStyle(color: _mutedInk),
           ),
         ),
       ),
@@ -655,7 +666,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Center(
               child: Text(
                 'No tracks available.',
-                style: TextStyle(color: Colors.white70),
+                style: TextStyle(color: _mutedInk),
               ),
             ),
           );
@@ -707,10 +718,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     width: s.width,
                                     verticalText: s.t > 0.8,
                                     color: Color.lerp(
-                                      AppColors.card,
-                                      s.index.isEven
-                                          ? const Color(0xFFA0D6CE)
-                                          : const Color(0xFF8DEBD0),
+                                      _cream,
+                                      s.index.isEven ? _softPeach : _peach,
                                       s.t,
                                     )!,
                                     radius: 25 + 10 * s.t,
@@ -764,7 +773,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required MusicTrack track,
     required double width,
     required bool verticalText,
-    Color color = const Color(0xFFD9F7EA),
+    Color color = const Color(0xFFFCE1D0),
     double radius = 25,
   }) {
     final hasImage = track.imageUrl != null && track.imageUrl!.isNotEmpty;
@@ -776,6 +785,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: _softPeach.withValues(alpha: 0.7)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x18A36D58),
+            blurRadius: 12,
+            offset: Offset(0, 5),
+          ),
+        ],
         image: hasImage
             ? DecorationImage(
                 image: NetworkImage(track.imageUrl!),
@@ -845,7 +862,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Center(
               child: Text(
                 'Could not load trending tracks.',
-                style: TextStyle(color: Colors.white70),
+                style: TextStyle(color: _mutedInk),
               ),
             ),
           ),
@@ -856,7 +873,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Center(
                   child: Text(
                     'No trending tracks available.',
-                    style: TextStyle(color: Colors.white70),
+                    style: TextStyle(color: _mutedInk),
                   ),
                 ),
               );
@@ -874,18 +891,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     return Container(
                       width: 26,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
+                        color: _palePeach,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
                         Icons.arrow_forward,
-                        color: Colors.white,
+                        color: _ink,
                         size: 14,
                       ),
                     );
                   }
 
                   final track = tracks[index];
+                  final hasImage =
+                      track.imageUrl != null && track.imageUrl!.isNotEmpty;
 
                   return GestureDetector(
                     onTap: () => playMusicQueue(tracks, index),
@@ -895,11 +914,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         gradient: const LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [AppColors.card, AppColors.cardBackground],
+                          colors: [_palePeach, _white],
                         ),
-                        borderRadius: BorderRadius.circular(8),
-                        image:
-                            track.imageUrl != null && track.imageUrl!.isNotEmpty
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _softPeach.withValues(alpha: 0.65),
+                        ),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x14A36D58),
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                        image: hasImage
                             ? DecorationImage(
                                 image: NetworkImage(track.imageUrl!),
                                 fit: BoxFit.cover,
@@ -922,7 +950,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 9,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              color: hasImage ? Colors.white : _ink,
                             ),
                           ),
                           const SizedBox(height: 3),
@@ -932,7 +960,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.inter(
                               fontSize: 8,
-                              color: Colors.white70,
+                              color: hasImage ? Colors.white70 : _mutedInk,
                             ),
                           ),
                         ],
@@ -1030,7 +1058,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Center(
               child: Text(
                 'Could not load popular tracks.',
-                style: TextStyle(color: Colors.white70),
+                style: TextStyle(color: _mutedInk),
               ),
             ),
           ),
@@ -1042,7 +1070,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Center(
                   child: Text(
                     'No popular tracks available.',
-                    style: TextStyle(color: Colors.white70),
+                    style: TextStyle(color: _mutedInk),
                   ),
                 ),
               );
@@ -1072,9 +1100,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       gradient: const LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [AppColors.card, AppColors.cardBackground],
+                        colors: [_white, _palePeach],
                       ),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _softPeach.withValues(alpha: 0.65),
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x12A36D58),
+                          blurRadius: 10,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
                     ),
 
                     child: Row(
@@ -1095,17 +1133,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     height: 58,
                                     child: Icon(
                                       Icons.music_note,
-                                      color: _mutedTeal,
+                                      color: _coral,
                                     ),
                                   ),
                                 )
                               : const SizedBox(
                                   width: 58,
                                   height: 58,
-                                  child: Icon(
-                                    Icons.music_note,
-                                    color: _mutedTeal,
-                                  ),
+                                  child: Icon(Icons.music_note, color: _coral),
                                 ),
                         ),
 
@@ -1123,8 +1158,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  color: _ink,
                                 ),
                               ),
 
@@ -1136,7 +1171,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
-                                  color: Colors.white70,
+                                  color: _mutedInk,
                                 ),
                               ),
                             ],
@@ -1155,7 +1190,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                           icon: Icon(
                             isLiked ? Icons.favorite : Icons.favorite_border,
-                            color: isLiked ? _mint : Colors.white70,
+                            color: isLiked ? _coral : _mutedInk,
                           ),
                         ),
                       ],
@@ -1196,7 +1231,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [AppColors.card, AppColors.background],
+                        colors: [_charcoalLight, _charcoal],
                       ),
                     ),
                   ),
@@ -1211,7 +1246,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 height: 84,
                 child: ClipPath(
                   clipper: _DomeClipper(),
-                  child: Container(color: const Color(0xFF3B5A5F)),
+                  child: Container(color: _charcoalLight),
                 ),
               ),
 
@@ -1288,7 +1323,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 25, color: isSelected ? Colors.white : _mint),
+              Icon(icon, size: 25, color: isSelected ? _peach : Colors.white70),
 
               const SizedBox(height: 4),
 

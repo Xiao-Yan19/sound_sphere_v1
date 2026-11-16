@@ -11,6 +11,7 @@ import '../data/models/music_track.dart';
 
 class LikedSongsScreen extends ConsumerWidget {
   const LikedSongsScreen({super.key, required this.onGoHome});
+
   final VoidCallback onGoHome;
 
   Future<void> _playTrack(
@@ -45,8 +46,12 @@ class LikedSongsScreen extends ConsumerWidget {
     } catch (error) {
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Playback failed: $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Playback failed: $error'),
+          backgroundColor: AppColors.textPrimary,
+        ),
+      );
     }
   }
 
@@ -55,82 +60,116 @@ class LikedSongsScreen extends ConsumerWidget {
     final likedAsync = ref.watch(likedSongsProvider);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 110),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
       child: likedAsync.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+          child: CircularProgressIndicator(color: AppColors.primaryDark),
         ),
+
         error: (error, stack) => Center(
           child: Text(
             'Could not load liked songs.',
-            style: GoogleFonts.inter(color: Colors.white70),
+            style: GoogleFonts.inter(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+            ),
           ),
         ),
+
         data: (songs) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // HEADER
               Row(
                 children: [
-                  IconButton(
-                    tooltip: 'Go to Home',
-                    onPressed: onGoHome,
-                    icon: const Icon(
-                      Icons.home_rounded,
-                      color: AppColors.primary,
-                      size: 27,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.peachPale,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      tooltip: 'Go to Home',
+                      onPressed: onGoHome,
+                      icon: const Icon(
+                        Icons.home_rounded,
+                        color: AppColors.primaryDark,
+                        size: 25,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Liked Songs',
-                    style: GoogleFonts.inter(
-                      color: AppColors.primary,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: Text(
+                      'Liked Songs',
+                      style: GoogleFonts.inter(
+                        color: AppColors.textPrimary,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
 
-              Text(
-                '${songs.length} saved songs',
-                style: GoogleFonts.inter(color: Colors.white60, fontSize: 13),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  '${songs.length} saved songs',
+                  style: GoogleFonts.inter(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
 
-              const SizedBox(height: 22),
+              const SizedBox(height: 24),
 
-              // Keep the rest of your existing empty state
-              // and ListView code here.
+              // EMPTY STATE
               if (songs.isEmpty)
                 Expanded(
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.favorite_border_rounded,
-                          color: AppColors.primary,
-                          size: 65,
+                        Container(
+                          width: 112,
+                          height: 112,
+                          decoration: BoxDecoration(
+                            color: AppColors.peachPale,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.favorite_border_rounded,
+                            color: AppColors.primaryDark,
+                            size: 55,
+                          ),
                         ),
-                        const SizedBox(height: 15),
+
+                        const SizedBox(height: 22),
+
                         Text(
                           'Your liked songs will appear here',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.inter(
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                             fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(height: 7),
+
+                        const SizedBox(height: 8),
+
                         Text(
                           'Tap the heart on any track to save it.',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.inter(
-                            color: Colors.white54,
+                            color: AppColors.textSecondary,
                             fontSize: 12,
                           ),
                         ),
@@ -138,60 +177,82 @@ class LikedSongsScreen extends ConsumerWidget {
                     ),
                   ),
                 )
+              // LIKED SONGS LIST
               else
                 Expanded(
                   child: ListView.separated(
-                    padding: EdgeInsets.zero,
+                    padding: const EdgeInsets.only(bottom: 16),
                     itemCount: songs.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    separatorBuilder: (_, _) => const SizedBox(height: 11),
                     itemBuilder: (context, index) {
                       final track = songs[index];
 
                       return Container(
                         decoration: BoxDecoration(
-                          color: AppColors.card,
-                          borderRadius: BorderRadius.circular(13),
+                          color: AppColors.cardBackground,
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: AppColors.border,
+                            width: 0.8,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFA36D58)
+                                  .withValues(alpha: 0.07),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
+
                         child: ListTile(
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
+                            horizontal: 11,
+                            vertical: 5,
                           ),
+
                           onTap: () => _playTrack(context, ref, track),
+
                           leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(9),
+                            borderRadius: BorderRadius.circular(10),
                             child:
                                 track.imageUrl != null &&
                                     track.imageUrl!.isNotEmpty
                                 ? Image.network(
                                     track.imageUrl!,
-                                    width: 52,
-                                    height: 52,
+                                    width: 54,
+                                    height: 54,
                                     fit: BoxFit.cover,
                                     errorBuilder: (_, _, _) =>
                                         _artworkPlaceholder(),
                                   )
                                 : _artworkPlaceholder(),
                           ),
+
                           title: Text(
                             track.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w700,
                               fontSize: 13,
                             ),
                           ),
-                          subtitle: Text(
-                            track.artistName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.inter(
-                              color: Colors.white60,
-                              fontSize: 11,
+
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              track.artistName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                              ),
                             ),
                           ),
+
                           trailing: IconButton(
                             tooltip: 'Remove from liked songs',
                             onPressed: () {
@@ -200,8 +261,9 @@ class LikedSongsScreen extends ConsumerWidget {
                                   .remove(track.id);
                             },
                             icon: const Icon(
-                              Icons.favorite,
-                              color: AppColors.primary,
+                              Icons.favorite_rounded,
+                              color: AppColors.primaryDark,
+                              size: 23,
                             ),
                           ),
                         ),
@@ -218,10 +280,17 @@ class LikedSongsScreen extends ConsumerWidget {
 
   Widget _artworkPlaceholder() {
     return Container(
-      width: 52,
-      height: 52,
-      color: AppColors.cardBackground,
-      child: const Icon(Icons.music_note_rounded, color: AppColors.primary),
+      width: 54,
+      height: 54,
+      decoration: BoxDecoration(
+        color: AppColors.peachPale,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Icon(
+        Icons.music_note_rounded,
+        color: AppColors.primaryDark,
+        size: 25,
+      ),
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:sound_sphere_v1/app/theme.dart';
 
 import 'package:sound_sphere_v1/features/music/application/music_providers.dart';
 import 'package:sound_sphere_v1/features/music/application/liked_songs_provider.dart';
@@ -21,11 +22,11 @@ class PlayerScreen extends ConsumerStatefulWidget {
 class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   double? _dragValue;
 
-  static const Color accent = Color(0xFF7DE5D0);
-  static const Color gold = Color(0xFFE6C36A);
-  static const Color background = Color(0xFF101716);
-  static const Color surface = Color(0xFF172321);
-  static const Color surfaceHigh = Color(0xFF1F302D);
+  static const Color accent = AppColors.primary;
+  static const Color gold = AppColors.primaryDark;
+  static const Color background = AppColors.background;
+  static const Color surface = AppColors.cardBackground;
+  static const Color surfaceHigh = AppColors.peachPale;
 
   String formatDuration(Duration duration) {
     final minutes = duration.inMinutes;
@@ -56,7 +57,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       behavior: SnackBarBehavior.floating,
       backgroundColor: surfaceHigh,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      content: Text(text, style: const TextStyle(color: Colors.white)),
+      content: Text(text, style: const TextStyle(color: AppColors.textPrimary)),
     );
   }
 
@@ -88,7 +89,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                         width: 40,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: Colors.white24,
+                          color: AppColors.border,
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
@@ -98,7 +99,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                     const Text(
                       'Add to playlist',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                       ),
@@ -111,7 +112,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: Colors.white54,
+                        color: AppColors.textSecondary,
                         fontSize: 13,
                       ),
                     ),
@@ -133,7 +134,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                       title: const Text(
                         'New playlist',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -163,7 +164,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                       },
                     ),
 
-                    const Divider(color: Colors.white10, height: 24),
+                    const Divider(color: AppColors.divider, height: 24),
 
                     playlistsAsync.when(
                       loading: () => const Padding(
@@ -176,7 +177,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                         padding: EdgeInsets.all(20),
                         child: Text(
                           'Unable to load your playlists.',
-                          style: TextStyle(color: Colors.white70),
+                          style: TextStyle(color: AppColors.textSecondary),
                         ),
                       ),
                       data: (playlists) {
@@ -186,7 +187,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                             child: Center(
                               child: Text(
                                 'No playlists created yet.',
-                                style: TextStyle(color: Colors.white54),
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                ),
                               ),
                             ),
                           );
@@ -214,13 +217,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                   ),
                                   child: const Icon(
                                     Icons.queue_music_rounded,
-                                    color: Colors.white70,
+                                    color: AppColors.textSecondary,
                                   ),
                                 ),
                                 title: Text(
                                   playlist.name,
                                   style: const TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.textPrimary,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -229,7 +232,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                       ? 'Already added'
                                       : '${playlist.tracks.length} songs',
                                   style: const TextStyle(
-                                    color: Colors.white54,
+                                    color: AppColors.textSecondary,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -237,7 +240,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                   alreadyAdded
                                       ? Icons.check_circle_rounded
                                       : Icons.add_circle_outline_rounded,
-                                  color: alreadyAdded ? accent : Colors.white54,
+                                  color: alreadyAdded
+                                      ? accent
+                                      : AppColors.textSecondary,
                                 ),
                                 onTap: alreadyAdded
                                     ? null
@@ -308,7 +313,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
               Positioned.fill(
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
-                  child: Container(color: const Color(0xCC101716)),
+                  child: Container(color: const Color(0xCCFDF4EC)),
                 ),
               ),
 
@@ -354,7 +359,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                         Navigator.of(context).maybePop(),
                                     icon: const Icon(
                                       Icons.keyboard_arrow_down_rounded,
-                                      color: Colors.white,
+                                      color: AppColors.textPrimary,
                                       size: 32,
                                     ),
                                   ),
@@ -364,7 +369,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                         const Text(
                                           'Playing from',
                                           style: TextStyle(
-                                            color: Colors.white54,
+                                            color: AppColors.textSecondary,
                                             fontSize: 12,
                                           ),
                                         ),
@@ -374,7 +379,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: const TextStyle(
-                                            color: Colors.white,
+                                            color: AppColors.textPrimary,
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
                                           ),
@@ -392,7 +397,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                     tooltip: 'Add to playlist',
                                     icon: const Icon(
                                       Icons.playlist_add_rounded,
-                                      color: Colors.white,
+                                      color: AppColors.textPrimary,
                                       size: 28,
                                     ),
                                   ),
@@ -409,7 +414,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.5),
+                                      color: AppColors.textPrimary.withOpacity(
+                                        0.14,
+                                      ),
                                       blurRadius: 40,
                                       offset: const Offset(0, 20),
                                     ),
@@ -443,7 +450,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                           style: const TextStyle(
-                                            color: Colors.white,
+                                            color: AppColors.textPrimary,
                                             fontSize: 24,
                                             height: 1.2,
                                             fontWeight: FontWeight.w700,
@@ -456,7 +463,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: const TextStyle(
-                                            color: Colors.white60,
+                                            color: AppColors.textSecondary,
                                             fontSize: 15,
                                           ),
                                         ),
@@ -481,7 +488,9 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                       isLiked
                                           ? Icons.favorite_rounded
                                           : Icons.favorite_border_rounded,
-                                      color: isLiked ? gold : Colors.white70,
+                                      color: isLiked
+                                          ? gold
+                                          : AppColors.textSecondary,
                                       size: 28,
                                     ),
                                   ),
@@ -562,14 +571,16 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                                   ),
                                                 ),
                                                 style: const TextStyle(
-                                                  color: Colors.white60,
+                                                  color:
+                                                      AppColors.textSecondary,
                                                   fontSize: 12,
                                                 ),
                                               ),
                                               Text(
                                                 '-${formatDuration(Duration(milliseconds: (maxValue - currentValue).round()))}',
                                                 style: const TextStyle(
-                                                  color: Colors.white60,
+                                                  color:
+                                                      AppColors.textSecondary,
                                                   fontSize: 12,
                                                 ),
                                               ),
@@ -607,7 +618,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                           Icons.shuffle_rounded,
                                           color: enabled
                                               ? accent
-                                              : Colors.white54,
+                                              : AppColors.textSecondary,
                                           size: 26,
                                         ),
                                       );
@@ -620,7 +631,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                     onPressed: () => handler.skipToPrevious(),
                                     icon: const Icon(
                                       Icons.skip_previous_rounded,
-                                      color: Colors.white,
+                                      color: AppColors.textPrimary,
                                       size: 42,
                                     ),
                                   ),
@@ -636,7 +647,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                         width: 72,
                                         height: 72,
                                         decoration: const BoxDecoration(
-                                          color: Colors.white,
+                                          color: AppColors.primary,
                                           shape: BoxShape.circle,
                                         ),
                                         child: IconButton(
@@ -666,7 +677,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                     onPressed: () => handler.skipToNext(),
                                     icon: const Icon(
                                       Icons.skip_next_rounded,
-                                      color: Colors.white,
+                                      color: AppColors.textPrimary,
                                       size: 42,
                                     ),
                                   ),
@@ -688,7 +699,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                           Icons.repeat_one_rounded,
                                           color: repeatOne
                                               ? accent
-                                              : Colors.white54,
+                                              : AppColors.textSecondary,
                                           size: 26,
                                         ),
                                       );
@@ -717,7 +728,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     return Container(
       width: size,
       height: size,
-      color: const Color(0xFF234440),
+      color: AppColors.peachPale,
       child: const Icon(Icons.music_note_rounded, size: 100, color: accent),
     );
   }
@@ -849,12 +860,12 @@ class _WaveformPainter extends CustomPainter {
     final barWidth = (size.width - (heights.length - 1) * gap) / heights.length;
 
     final playedPaint = Paint()
-      ..color = const Color(0xFF7DE5D0)
+      ..color = AppColors.primaryDark
       ..strokeCap = StrokeCap.round
       ..strokeWidth = barWidth;
 
     final remainingPaint = Paint()
-      ..color = Colors.white.withOpacity(0.20)
+      ..color = AppColors.border.withOpacity(0.75)
       ..strokeCap = StrokeCap.round
       ..strokeWidth = barWidth;
 
@@ -896,30 +907,33 @@ class _CreatePlaylistDialogState extends State<_CreatePlaylistDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xFF172321),
+      backgroundColor: AppColors.cardBackground,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: const Text(
         'Create playlist',
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w700,
+        ),
       ),
       content: TextField(
         controller: _controller,
         autofocus: true,
         textCapitalization: TextCapitalization.words,
-        style: const TextStyle(color: Colors.white),
-        cursorColor: const Color(0xFF7DE5D0),
+        style: const TextStyle(color: AppColors.textPrimary),
+        cursorColor: AppColors.primaryDark,
         decoration: InputDecoration(
           hintText: 'Enter playlist name',
-          hintStyle: const TextStyle(color: Colors.white38),
+          hintStyle: const TextStyle(color: AppColors.textSecondary),
           filled: true,
-          fillColor: const Color(0xFF1F302D),
+          fillColor: AppColors.background,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF7DE5D0)),
+            borderSide: const BorderSide(color: AppColors.primaryDark),
           ),
         ),
         onSubmitted: (value) {
@@ -931,7 +945,10 @@ class _CreatePlaylistDialogState extends State<_CreatePlaylistDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel', style: TextStyle(color: Colors.white60)),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
         ),
         ElevatedButton(
           onPressed: () {
@@ -943,8 +960,8 @@ class _CreatePlaylistDialogState extends State<_CreatePlaylistDialog> {
           },
           style: ElevatedButton.styleFrom(
             elevation: 0,
-            backgroundColor: const Color(0xFF7DE5D0),
-            foregroundColor: const Color(0xFF173F3E),
+            backgroundColor: AppColors.primary,
+            foregroundColor: AppColors.textPrimary,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),

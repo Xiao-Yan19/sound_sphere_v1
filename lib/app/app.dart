@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -15,12 +14,11 @@ class SoundSphereApp extends ConsumerWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'SoundSphere',
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
       home: const AuthGate(),
     );
   }
 }
-
 
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
@@ -31,9 +29,6 @@ class AuthGate extends ConsumerWidget {
       authControllerProvider.select((state) => state.status),
     );
 
-    return HomeScreen(
-      isAuthenticated: status == AuthStatus.authenticated,
-    );
+    return HomeScreen(isAuthenticated: status == AuthStatus.authenticated);
   }
 }
-
